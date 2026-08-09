@@ -1,30 +1,41 @@
-const { app, BrowserWindow } = require('electron/main')
-const path = require('node:path')
+import { createRequire } from 'node:module';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const require = createRequire(import.meta.url);
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const { app, BrowserWindow } = require('electron/main');
+const path = require('node:path');
+
+const { Window } = await import('./.out/index.js');
 
 function createWindow() {
     const win = new BrowserWindow({
-        width: 400,
-        height: 200,
+        width: Window.WIDTH,
+        height: Window.HEIGHT,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js')
         }
-    })
+    });
 
-    win.loadFile('index.html')
+    win.loadFile('index.html');
 }
 
 app.whenReady().then(() => {
-    createWindow()
+    createWindow();
 
     app.on('activate', () => {
-        if(BrowserWindow.getAllWindows().length == 0) {
-            createWindow()
+        if (BrowserWindow.getAllWindows().length === 0) {
+            createWindow();
         }
-    })
-})
+    });
+});
 
 app.on('window-all-closed', () => {
-    if(process.platform !== 'darwin') {
-        app.quit()
+    if (process.platform !== 'darwin') {
+        app.quit();
     }
-})
+});

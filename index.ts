@@ -1,2 +1,9 @@
-export const WINDOW_WIDTH = 200;
-export const WINDOW_HEIGHT = 400;
+/**
+ * 
+ * Window Module
+ * 
+ */
+export namespace Window {
+    export const WIDTH = 800;
+    export const HEIGHT = 600;
+}
