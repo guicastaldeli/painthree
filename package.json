@@ -1,0 +1,29 @@
+{
+  "name": "painthree",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/guicastaldeli/painthree#readme",
+  "bugs": {
+    "url": "https://github.com/guicastaldeli/painthree/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/guicastaldeli/painthree.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "./main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "electron": "^43.3.0",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@types/electron": "^1.4.38"
+  }
+}
