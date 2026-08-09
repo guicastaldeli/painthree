@@ -10,7 +10,7 @@ const __dirname = dirname(__filename);
 const { app, BrowserWindow } = require('electron/main');
 const path = require('node:path');
 
-const { Window } = await import('./.out/index.js');
+const { Window } = await import('./.out/window.js');
 
 function createWindow() {
     const win = new BrowserWindow({
