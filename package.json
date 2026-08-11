@@ -24,6 +24,8 @@
     "typescript": "^7.0.2"
   },
   "dependencies": {
-    "@types/electron": "^1.4.38"
+    "@types/electron": "^1.4.38",
+    "@types/gl-matrix": "^2.4.5",
+    "gl-matrix": "^3.4.4"
   }
 }
