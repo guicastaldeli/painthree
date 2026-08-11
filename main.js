@@ -17,12 +17,14 @@ function createWindow() {
         width: Window.WIDTH,
         height: Window.HEIGHT,
         webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
             preload: path.join(__dirname, 'preload.js')
         }
     });
 
     win.loadFile('index.html');
-    win.setMenu(null);
+    win.setMenuBarVisibility(false);
 }
 
 app.whenReady().then(() => {
