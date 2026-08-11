@@ -1,5 +1,6 @@
-const canvas = <HTMLCanvasElement>document.getElementById('content');
-const gl = <WebGL2RenderingContext>canvas.getContext('webgl');
+export const canvas = <HTMLCanvasElement>document.getElementById('content');
+export const gl = <WebGL2RenderingContext>canvas.getContext('webgl');
+export let shaderProgram: WebGLProgram | null = null!;
 
 async function loadShader(gl: WebGL2RenderingContext, type: number, url: string): Promise<WebGLShader> {
     const res = await fetch(url);
@@ -31,14 +32,14 @@ async function createShaderProgram(gl: WebGL2RenderingContext): Promise<WebGLPro
         loadShader(gl, gl.FRAGMENT_SHADER, './frag.glsl')
     ]);
 
-    const program = gl.createProgram();
-    gl.attachShader(program, vertexShader);
-    gl.attachShader(program, fragShader);
-    gl.linkProgram(program);
+    shaderProgram = gl.createProgram();
+    gl.attachShader(shaderProgram, vertexShader);
+    gl.attachShader(shaderProgram, fragShader);
+    gl.linkProgram(shaderProgram);
 
-    if(!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        const info = gl.getProgramInfoLog(program);
-        gl.deleteProgram(program);
+    if(!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+        const info = gl.getProgramInfoLog(shaderProgram);
+        gl.deleteProgram(shaderProgram);
 
         throw new Error(`Program link error: ${info}`);
     }
@@ -46,12 +47,12 @@ async function createShaderProgram(gl: WebGL2RenderingContext): Promise<WebGLPro
     gl.deleteShader(vertexShader);
     gl.deleteShader(fragShader);
 
-    return program;
+    return shaderProgram;
 }
 
 async function render(): Promise<void> {
     try {
-        const shaderProgram = await createShaderProgram(gl);
+        shaderProgram = await createShaderProgram(gl);
         gl.useProgram(shaderProgram);
     } catch(err) {
         console.error(err);
