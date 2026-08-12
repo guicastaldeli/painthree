@@ -425,3 +425,115 @@ export function renderMesh(meshType: MeshType): void {
     
     index.gl.bindVertexArray(null);
 }
+
+/**
+ * 
+ * Camera
+ * 
+ */
+export interface Camera {
+    position: vec3;
+    front: vec3;
+    up: vec3;
+    right: vec3;
+    worldUp: vec3;
+
+    yaw: number;
+    pitch: number;
+
+    fov: number;
+    near: number;
+    far: number;
+    aspect: number;
+
+    viewMatrix: mat4;
+    projectionMatrix: mat4;
+}
+
+export const Keys: { 
+    [key: string]: boolean 
+} = {};
+
+let isPointerLocked = false;
+let mouseMovement = { x: 0, y: 0 };
+
+// Get Camera Position
+export function getCameraPosition(camera: Camera): vec3 {
+    const val = camera.position;
+    return val;
+}
+
+// Set Camera Position
+export function setCameraPosition(camera: Camera, x: number, y: number, z: number): void {
+    vec3.set(camera.position, x, y, z);
+}
+
+// Set Camera
+export function setCamera(position: [number, number, number] = [0, 0, 0]): Camera {
+    const pos = vec3.fromValues(position[0], position[1], position[2]);
+    const fov = 90;
+    const yaw = -90;
+    const pitch = 0;
+    const near = 0.1;
+    const far = 100.0;
+    const front = vec3.fromValues(0, 0, -1);
+    const up = vec3.fromValues(0, 1, 0);
+    const worldUp = vec3.fromValues(0, 1, 0);
+    const right = vec3.create();
+    const aspect = index.canvas.width / index.canvas.height;
+    const viewMatrix = mat4.create();
+    const projectionMatrix = mat4.create();
+    vec3.cross(right, front, up);
+
+    return {
+        position: pos,
+        front: front,
+        up: up,
+        right: right,
+        worldUp: worldUp,
+        yaw: yaw,
+        pitch: pitch,
+        fov: fov * Math.PI / 180,
+        near: near,
+        far: far,
+        aspect: aspect,
+        viewMatrix: viewMatrix,
+        projectionMatrix: projectionMatrix
+    };
+}
+
+// Update Camera 
+export function updateCameraVectors(camera: Camera): void {
+    const front = vec3.create();
+    front[0] = Math.cos(camera.yaw * Math.PI / 180) * Math.cos(camera.pitch * Math.PI / 180);
+    front[1] = Math.sin(camera.pitch * Math.PI / 180);
+    front[2] = Math.sin(camera.yaw * Math.PI / 180) * Math.cos(camera.pitch * Math.PI / 180);
+    
+    vec3.normalize(camera.front, front);
+    vec3.cross(camera.right, camera.front, camera.worldUp);
+    vec3.cross(camera.up, camera.right, camera.front);
+    vec3.normalize(camera.up, camera.up);
+}
+
+// Update Camera Matrices
+export function updateCameraMatrices(camera: Camera): void {
+    camera.aspect = index.canvas.width / index.canvas.height;
+    
+    const target = vec3.create();
+    vec3.add(target, camera.position, camera.front);
+    mat4.lookAt(camera.viewMatrix, camera.position, target, camera.up);
+    
+    mat4.perspective(camera.projectionMatrix, camera.fov, camera.aspect, camera.near, camera.far);
+    
+    const viewLoc = index.gl.getUniformLocation(index.shaderProgram!, 'uViewMatrix');
+    const projLoc = index.gl.getUniformLocation(index.shaderProgram!, 'uProjectionMatrix');
+    
+    index.gl.uniformMatrix4fv(viewLoc, false, camera.viewMatrix);
+    index.gl.uniformMatrix4fv(projLoc, false, camera.projectionMatrix);
+}
+
+// Update Camera
+export function updateCamera(camera: Camera): void {
+    updateCameraVectors(camera);
+    updateCameraMatrices(camera);
+}

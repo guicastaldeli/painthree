@@ -1,12 +1,9 @@
 import * as index from './index.js';
 import * as data from './data.js';
-import { mat4 } from 'gl-matrix';
+import { mat4, vec3 } from 'gl-matrix';
 
-/**
- * 
- * Camera
- * 
- */
+
+
 function setCamera(): void {
     const width = index.canvas.width;
     const height = index.canvas.height;
