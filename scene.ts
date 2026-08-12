@@ -1,7 +1,8 @@
 import * as index from './index';
+import * as data from './data';
 import { mat4 } from 'gl-matrix';
 
-function setCamera(gl: WebGL2RenderingContext, buffers: Buffer): void {
+function setCamera(): void {
     const fov = (45 * Math.PI) / 180;
     const aspect = index.canvas.clientWidth / index.canvas.clientHeight;
 
@@ -14,13 +15,14 @@ function setCamera(gl: WebGL2RenderingContext, buffers: Buffer): void {
     mat4.perspective(projectionMatrix, fov, aspect, near, far);
     mat4.translate(viewMatrix, viewMatrix, [-0.0, 0.0, -6.0]);
 
-    const projectionLoc = gl.getUniformLocation(index.shaderProgram!, 'uProjectionMatrix');
-    const viewLoc = gl.getUniformLocation(index.shaderProgram!, 'uViewMatrix');
+    const projectionLoc = index.gl.getUniformLocation(index.shaderProgram!, 'uProjectionMatrix');
+    const viewLoc = index.gl.getUniformLocation(index.shaderProgram!, 'uViewMatrix');
 
-    gl.uniformMatrix4fv(projectionLoc, false, projectionMatrix);
-    gl.uniformMatrix4fv(viewLoc, false, viewMatrix);
+    index.gl.uniformMatrix4fv(projectionLoc, false, projectionMatrix);
+    index.gl.uniformMatrix4fv(viewLoc, false, viewMatrix);
 }
 
 export function render(): void {
-    
+    setCamera();
+    data.renderMesh(data.MeshType.TRIANGLE);
 }

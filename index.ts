@@ -1,3 +1,5 @@
+import * as scene from './scene';
+
 export const canvas = <HTMLCanvasElement>document.getElementById('content');
 export const gl = <WebGL2RenderingContext>canvas.getContext('webgl');
 export let shaderProgram: WebGLProgram | null = null!;
@@ -60,6 +62,8 @@ async function render(): Promise<void> {
 
     gl.clearColor(1.0, 0.3, 0.5, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
+
+    scene.render();
 }
 
 async function init(): Promise<void> {
