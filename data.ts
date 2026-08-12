@@ -1,5 +1,5 @@
-import * as index from './index.js';
-import { mat4, vec3 } from 'gl-matrix';
+import * as index from "./index.js";
+import { mat4, vec3 } from "gl-matrix";
 
 /**
  * 
@@ -450,21 +450,24 @@ export interface Camera {
     projectionMatrix: mat4;
 }
 
-export const Keys: { 
-    [key: string]: boolean 
-} = {};
+let cameraInstance: Camera | null = null;
 
-let isPointerLocked = false;
-let mouseMovement = { x: 0, y: 0 };
+// Get Camera
+export function getCamera(): Camera {
+    if(!cameraInstance) throw new Error('Camera not initialized. Call setCamera() first.');
+    return cameraInstance;
+}
 
 // Get Camera Position
-export function getCameraPosition(camera: Camera): vec3 {
+export function getCameraPosition(): vec3 {
+    const camera = getCamera();
     const val = camera.position;
     return val;
 }
 
 // Set Camera Position
-export function setCameraPosition(camera: Camera, x: number, y: number, z: number): void {
+export function setCameraPosition(x: number, y: number, z: number): void {
+    const camera = getCamera();
     vec3.set(camera.position, x, y, z);
 }
 
@@ -485,7 +488,7 @@ export function setCamera(position: [number, number, number] = [0, 0, 0]): Camer
     const projectionMatrix = mat4.create();
     vec3.cross(right, front, up);
 
-    return {
+    const camera: Camera = {
         position: pos,
         front: front,
         up: up,
@@ -500,10 +503,15 @@ export function setCamera(position: [number, number, number] = [0, 0, 0]): Camer
         viewMatrix: viewMatrix,
         projectionMatrix: projectionMatrix
     };
+
+    cameraInstance = camera;
+    return camera;
 }
 
 // Update Camera 
-export function updateCameraVectors(camera: Camera): void {
+export function updateCameraVectors(): void {
+    const camera = getCamera();
+
     const front = vec3.create();
     front[0] = Math.cos(camera.yaw * Math.PI / 180) * Math.cos(camera.pitch * Math.PI / 180);
     front[1] = Math.sin(camera.pitch * Math.PI / 180);
@@ -516,7 +524,9 @@ export function updateCameraVectors(camera: Camera): void {
 }
 
 // Update Camera Matrices
-export function updateCameraMatrices(camera: Camera): void {
+export function updateCameraMatrices(): void {
+    const camera = getCamera();
+
     camera.aspect = index.canvas.width / index.canvas.height;
     
     const target = vec3.create();
@@ -533,7 +543,6 @@ export function updateCameraMatrices(camera: Camera): void {
 }
 
 // Update Camera
-export function updateCamera(camera: Camera): void {
-    updateCameraVectors(camera);
-    updateCameraMatrices(camera);
+export function updateCamera(): void {
+    updateCameraMatrices();
 }

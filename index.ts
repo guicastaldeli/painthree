@@ -1,4 +1,6 @@
-import * as scene from './scene.js';
+import * as scene from "./scene.js";
+import * as input from "./input.js";
+import * as data from "./data.js";
 
 export const canvas = <HTMLCanvasElement>document.getElementById('content');
 export const gl = <WebGL2RenderingContext>canvas.getContext('webgl2');
@@ -77,6 +79,27 @@ async function createShaderProgram(): Promise<void> {
 
 /**
  * 
+ * Tick
+ * 
+ */
+let lastTime = 0;
+let deltaTime = 0;
+
+function setTick(): number {
+    const currentTime = performance.now();
+    deltaTime = (currentTime - lastTime) / 1000;
+    lastTime = currentTime;
+
+    return deltaTime;
+}
+
+export function getDeltaTime(): number {
+    const val = deltaTime;
+    return val;
+}
+
+/**
+ * 
  * Render
  * 
  */
@@ -98,6 +121,8 @@ function resize(): void {
 
 // Render
 function setRender(): void {
+    const time = getDeltaTime();
+
     gl.useProgram(shaderProgram);
 
     resize();
@@ -109,9 +134,12 @@ function setRender(): void {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     scene.render();
+
+    input.processKeyboard(time);
 }
 
 function render() {
+    setTick();
     setRender();
     requestAnimationFrame(render);
 }
@@ -128,6 +156,8 @@ async function init(): Promise<void> {
     }
 
     await createShaderProgram();
+
+    input.setupControls();
 
     window.addEventListener('resize', resize);
     render();
