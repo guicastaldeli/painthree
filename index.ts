@@ -1,8 +1,10 @@
-import * as scene from './scene';
+import * as scene from './scene.js';
 
 export const canvas = <HTMLCanvasElement>document.getElementById('content');
-export const gl = <WebGL2RenderingContext>canvas.getContext('webgl');
+export const gl = <WebGL2RenderingContext>canvas.getContext('webgl2');
 export let shaderProgram: WebGLProgram | null = null!;
+
+let needsRender = false;
 
 async function loadShader(gl: WebGL2RenderingContext, type: number, url: string): Promise<WebGLShader> {
     const res = await fetch(url);
@@ -52,6 +54,22 @@ async function createShaderProgram(gl: WebGL2RenderingContext): Promise<WebGLPro
     return shaderProgram;
 }
 
+function resize(): void {
+    const displayWidth = canvas.clientWidth;
+    const displayHeight = canvas.clientHeight;
+    const dpr = window.devicePixelRatio || 1;
+
+    const width = Math.floor(displayWidth * dpr);
+    const height = Math.floor(displayHeight * dpr);
+    if(canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
+
+        if(gl) gl.viewport(0, 0, width, height);
+        needsRender = true;
+    }
+}
+
 async function render(): Promise<void> {
     try {
         shaderProgram = await createShaderProgram(gl);
@@ -60,10 +78,21 @@ async function render(): Promise<void> {
         console.error(err);
     }
 
+    resize();
+
     gl.clearColor(1.0, 0.3, 0.5, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     scene.render();
+}
+
+function loop() {
+    if(needsRender) {
+        render();
+        needsRender = false;
+    }
+
+    requestAnimationFrame(loop);
 }
 
 async function init(): Promise<void> {
@@ -73,6 +102,11 @@ async function init(): Promise<void> {
     }
 
     await render();
+    needsRender = true;
+
+    window.addEventListener('resize', resize);
+
+    loop();
 }
 
 init();

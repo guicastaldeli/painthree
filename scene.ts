@@ -1,8 +1,13 @@
-import * as index from './index';
-import * as data from './data';
+import * as index from './index.js';
+import * as data from './data.js';
 import { mat4 } from 'gl-matrix';
 
 function setCamera(): void {
+    const width = index.canvas.width;
+    const height = index.canvas.height;
+    
+    index.gl.viewport(0, 0, width, height);
+    
     const fov = (45 * Math.PI) / 180;
     const aspect = index.canvas.clientWidth / index.canvas.clientHeight;
 
@@ -13,7 +18,7 @@ function setCamera(): void {
     const viewMatrix = mat4.create();
 
     mat4.perspective(projectionMatrix, fov, aspect, near, far);
-    mat4.translate(viewMatrix, viewMatrix, [-0.0, 0.0, -6.0]);
+    mat4.translate(viewMatrix, viewMatrix, [0.0, 0.0, -6.0]);
 
     const projectionLoc = index.gl.getUniformLocation(index.shaderProgram!, 'uProjectionMatrix');
     const viewLoc = index.gl.getUniformLocation(index.shaderProgram!, 'uViewMatrix');

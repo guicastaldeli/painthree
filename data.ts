@@ -1,4 +1,4 @@
-import * as index from './index';
+import * as index from './index.js';
 
 /**
  * 
@@ -179,6 +179,8 @@ export function renderMesh(meshType: MeshType): void {
     }
 
     index.gl.useProgram(index.shaderProgram);
+
+    index.gl.bindVertexArray(mesh.vao);
 
     index.gl.drawElements(index.gl.TRIANGLES, mesh.indexCount, index.gl.UNSIGNED_SHORT, 0);
     index.gl.bindVertexArray(null);
