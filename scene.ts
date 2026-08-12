@@ -2,6 +2,11 @@ import * as index from './index.js';
 import * as data from './data.js';
 import { mat4 } from 'gl-matrix';
 
+/**
+ * 
+ * Camera
+ * 
+ */
 function setCamera(): void {
     const width = index.canvas.width;
     const height = index.canvas.height;
@@ -27,7 +32,19 @@ function setCamera(): void {
     index.gl.uniformMatrix4fv(viewLoc, false, viewMatrix);
 }
 
+/**
+ * 
+ * Render
+ * 
+ */
+let angle = 0;
 export function render(): void {
+    angle += 0.01;
     setCamera();
-    data.renderMesh(data.MeshType.TRIANGLE);
+
+    const pyramid = data.MeshType.CUBE;
+    data.setMeshColor(pyramid, [0.2, 0.8, 1.0]);
+    data.setMeshRotation(pyramid, 0, angle, 0);
+    data.setMeshPosition(pyramid, 0.8, 0.5, 0);
+    data.renderMesh(pyramid);
 }

@@ -4,8 +4,12 @@ export const canvas = <HTMLCanvasElement>document.getElementById('content');
 export const gl = <WebGL2RenderingContext>canvas.getContext('webgl2');
 export let shaderProgram: WebGLProgram | null = null!;
 
-let needsRender = false;
-
+/**
+ * 
+ * Shader
+ * 
+ */
+// Load
 async function loadShader(gl: WebGL2RenderingContext, type: number, url: string): Promise<WebGLShader> {
     const res = await fetch(url);
     if(!res.ok) throw new Error(`Failed to load shader: ${url}`);
@@ -30,7 +34,8 @@ async function loadShader(gl: WebGL2RenderingContext, type: number, url: string)
     return shader;
 }
 
-async function createShaderProgram(gl: WebGL2RenderingContext): Promise<WebGLProgram> {
+// Set Shader Program
+async function setShaderProgram(gl: WebGL2RenderingContext): Promise<WebGLProgram> {
     const [vertexShader, fragShader] = await Promise.all([
         loadShader(gl, gl.VERTEX_SHADER, './vert.glsl'),
         loadShader(gl, gl.FRAGMENT_SHADER, './frag.glsl')
@@ -54,6 +59,28 @@ async function createShaderProgram(gl: WebGL2RenderingContext): Promise<WebGLPro
     return shaderProgram;
 }
 
+// Create Shader Program
+async function createShaderProgram(): Promise<void> {
+    if(gl == null) {
+        console.error('gl error!'); 
+        return;
+    }
+
+    try {
+        shaderProgram = await setShaderProgram(gl);
+        console.log('Shader program created successfully');
+    } catch(err) {
+        console.error(err);
+        return;
+    }
+}
+
+/**
+ * 
+ * Render
+ * 
+ */
+// Resize
 function resize(): void {
     const displayWidth = canvas.clientWidth;
     const displayHeight = canvas.clientHeight;
@@ -66,47 +93,44 @@ function resize(): void {
         canvas.height = height;
 
         if(gl) gl.viewport(0, 0, width, height);
-        needsRender = true;
     }
 }
 
-async function render(): Promise<void> {
-    try {
-        shaderProgram = await createShaderProgram(gl);
-        gl.useProgram(shaderProgram);
-    } catch(err) {
-        console.error(err);
-    }
+// Render
+function setRender(): void {
+    gl.useProgram(shaderProgram);
 
     resize();
 
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LESS);
+
     gl.clearColor(1.0, 0.3, 0.5, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     scene.render();
 }
 
-function loop() {
-    if(needsRender) {
-        render();
-        needsRender = false;
-    }
-
-    requestAnimationFrame(loop);
+function render() {
+    setRender();
+    requestAnimationFrame(render);
 }
 
+/**
+ * 
+ * Init
+ * 
+ */
 async function init(): Promise<void> {
     if(gl == null) {
         console.error('Unable to init WebGL!...');
         return;
     }
 
-    await render();
-    needsRender = true;
+    await createShaderProgram();
 
     window.addEventListener('resize', resize);
-
-    loop();
+    render();
 }
 
 init();
