@@ -1,6 +1,7 @@
 import * as index from "./index.js";
 import * as data from "./data.js";
 import * as input from "./index.js";
+import { vec3 } from "gl-matrix";
 
 /**
  * 
@@ -34,9 +35,8 @@ export function render(): void {
     
     angle += 0.01;
 
-    const pyramid = data.MeshType.CUBE;
-    data.setMeshColor(pyramid, [0.2, 0.8, 1.0]);
-    data.setMeshRotation(pyramid, 0, angle, 0);
-    data.setMeshPosition(pyramid, 0.8, 0.5, 0);
-    data.renderMesh(pyramid);
+    data.addMesh('cube', data.MeshType.CUBE, vec3.fromValues(0.8, 0.5, 0), vec3.fromValues(0.2, 0.8, 1.0));
+    data.setMeshRotation('cube', 0, angle, 0);
+
+    data.renderAllMeshes();
 }

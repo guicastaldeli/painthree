@@ -37,8 +37,9 @@ interface AttributeConfig {
  * Mesh
  * 
  */
-const meshCache: Map<MeshType, Buffer[]> = new Map();
+const meshCache: Map<string, Buffer> = new Map();
 let selectedMesh: Buffer | null = null;
+const spawnedTypes: Set<MeshType> = new Set();
 
 export enum MeshType {
     TRIANGLE,
@@ -216,34 +217,23 @@ export function getMeshData(type: MeshType): MeshData {
     return val;
 }
 
-export function getMesh(type: MeshType): Buffer {
-    const list = meshCache.get(type);
-    if(!list || list.length === 0) throw new Error(`No mesh of type of ${type}`);
-    return list[0];
-}
-
-export function getMeshes(type: MeshType): Buffer[] {
-    const val = meshCache.get(type) ?? [];
+export function getMesh(id: string): Buffer | null {
+    const val = meshCache.get(id) ?? null;
     return val;
 }
 
 export function getAllMeshes(): Buffer[] {
-    const all: Buffer[] = [];
-    for(const list of meshCache.values()) all.push(...list);
-    return all;
+    const val = Array.from(meshCache.values());
+    return val;
 }
 
 // Remove Mesh
-export function removeMesh(mesh: Buffer): void {
-    for(const [type, list] of meshCache.entries()) {
-        const i = list.indexOf(mesh);
-        if(i !== -1) {
-            list.splice(i, 1);
-            meshCache.set(type, list);
-            
-            return;
-        }
-    }
+export function removeMesh(id: string): void {
+    const mesh = meshCache.get(id);
+    if(!mesh) return;
+    if(selectedMesh === mesh) selectedMesh = null;
+
+    meshCache.delete(id);
 }
 
 // Select Mesh
@@ -259,25 +249,36 @@ export function getSelectedMesh(): Buffer | null {
 }
 
 // Set Mesh Roation
-export function setMeshRotation(mesh: Buffer, x: number, y: number, z: number): void {
+export function setMeshRotation(id: string, x: number, y: number, z: number): void {
+    const mesh = getMesh(id);
+    if(!mesh) return;
+
     vec3.set(mesh.rotation, x, y, z);
     updateModelMatrix(mesh);
 }
 
 // Set Mesh Position
-export function setMeshPosition(mesh: Buffer, x: number, y: number, z: number): void {
+export function setMeshPosition(id: string, x: number, y: number, z: number): void {
+    const mesh = getMesh(id);
+    if(!mesh) return;
+
     vec3.set(mesh.position, x, y, z);
     updateModelMatrix(mesh);
 }
 
 // Set Mesh Scale
-export function setMeshScale(mesh: Buffer, x: number, y: number, z: number): void {
+export function setMeshScale(id: string, x: number, y: number, z: number): void {
+    const mesh = getMesh(id);
+    if(!mesh) return;
+    
     vec3.set(mesh.scale, x, y, z);
     updateModelMatrix(mesh);
 }
 
 // Set Mesh Color
-export function setMeshColor(mesh: Buffer, color: vec3): void {
+export function setMeshColor(id: string, color: vec3): void {
+    const mesh = getMesh(id);
+    if(!mesh) return;
     vec3.copy(mesh.color, color);
 }
 
@@ -350,46 +351,42 @@ function updateModelMatrix(mesh: Buffer): void {
 }
 
 // Render
-export function renderMesh(meshType: MeshType, mesh?: Buffer): void {
+export function renderMesh(mesh: Buffer): void {
     if(!index.shaderProgram) {
         console.error('Shader program not initialized');
         return;
     }
 
-    const target = mesh ?? getMesh(meshType);
-
     const colorLoc = index.gl.getUniformLocation(index.shaderProgram, 'uColor');
-    index.gl.uniform3fv(colorLoc, target.selected ? vec3.fromValues(0.5, 0.5, 0.5) : target.color);
+    index.gl.uniform3fv(colorLoc, mesh.selected ? vec3.fromValues(0.5, 0.5, 0.5) : mesh.color);
 
     const modelMatrix = index.gl.getUniformLocation(index.shaderProgram, 'uModelMatrix');
-    index.gl.uniformMatrix4fv(modelMatrix, false, target.modelMatrix);
+    index.gl.uniformMatrix4fv(modelMatrix, false, mesh.modelMatrix);
 
-    index.gl.bindVertexArray(target.vao);
-    index.gl.drawElements(index.gl.TRIANGLES, target.indexCount, index.gl.UNSIGNED_SHORT, 0);
+    index.gl.bindVertexArray(mesh.vao);
+    index.gl.drawElements(index.gl.TRIANGLES, mesh.indexCount, index.gl.UNSIGNED_SHORT, 0);
     
     index.gl.bindVertexArray(null);
 }
 
 export function renderAllMeshes(): void {
-    for(const [type, list] of meshCache.entries()) {
-        for(const mesh of list) {
-            renderMesh(type, mesh);
-        }
+    for(const mesh of getAllMeshes()) {
+        renderMesh(mesh);
     }
 }
 
 // Add Mesh
-export function addMesh(type: MeshType, position: vec3, color?: vec3): Buffer {
+export function addMesh(id: string, type: MeshType, position: vec3, color?: vec3): Buffer {
+    if(meshCache.has(id)) return meshCache.get(id)!;
+
     const data = getMeshData(type);
     const mesh = createMesh(data);
-    
-    setMeshColor(mesh, color ?? (data.color ? vec3.fromValues(...data.color) : vec3.fromValues(1, 1, 1)));
-    setMeshPosition(mesh, position[0], position[1], position[2]);
+    meshCache.set(id, mesh);
 
-    const list = meshCache.get(type) ?? [];
-    list.push(mesh);
-    meshCache.set(type, list);
-    
+    setMeshColor(id, color ?? (data.color ? vec3.fromValues(...data.color) : vec3.fromValues(1, 1, 1)));
+    setMeshPosition(id, position[0], position[1], position[2]);
+
+    meshCache.set(id, mesh);
     return mesh;
 }
 
