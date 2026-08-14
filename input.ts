@@ -13,6 +13,17 @@ function isKeyPressed(key: string): boolean {
     return val;
 }
 
+// Cosume Key
+function consumeKey(key: string): boolean {
+    const pressed = isKeyPressed(key);
+    if(pressed) {
+        Keys[key] = false;
+        Keys[key.toLowerCase()] = false;
+        Keys[key.toUpperCase()] = false;
+    }
+    return pressed;
+}
+
 // Process Keyboard
 export function processKeyboard(deltaTime: number): void {
     const camera = data.getCamera();
@@ -36,7 +47,7 @@ export function processKeyboard(deltaTime: number): void {
     /* Left */ if(isKeyPressed('a')) vec3.scaleAndAdd(camera.position, camera.position, right, -speed);
     /* Down */ if(isKeyPressed('shift')) camera.position[1] -= speed;
     /* Up */ if(isKeyPressed(' ')) camera.position[1] += speed;
-    /* Menu */ if(isKeyPressed('e')) data.openToolMenu();
+    /* Menu */ if(consumeKey('e')) data.openToolMenu();
 
     if(isPointerLocked) {
         camera.yaw += mouseMovement.x * sensv;

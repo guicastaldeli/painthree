@@ -13,6 +13,7 @@
     height: 100%;
     display: block;
     outline: none;
+    z-index: 0;
 }
 
 body {
@@ -20,6 +21,16 @@ body {
     padding: 0;
     overflow: hidden;
     background: #000;
+}
+
+.ui {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9;
+    pointer-events: none;
 }
 
 /**
@@ -32,17 +43,17 @@ body {
 * Menu
 *
 */
-#el_menu {
+#el_tool_menu {
     width: 100%;
     height: 10%;
 }
 
-#el_menu--main {
+#el_tool_menu--main {
     width: 100%;
     height: 100%;
 }
 
-#el_menu--content {
+#el_tool_menu--content {
     width: 100%;
     height: 100%;
 

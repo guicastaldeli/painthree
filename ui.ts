@@ -1,8 +1,8 @@
 import * as data from "./data.js";
 
 const state = {
-    html: null as HTMLElement | null,
     id: null as string | null,
+    html: null as HTMLElement | null,
     elements: new Map<string, any>(),
     handler: null as ((e: KeyboardEvent) => void) | null
 };
@@ -43,6 +43,7 @@ export function register(id: string, config: any): void {
  * 
  */
 export function open(id: string): void {
+    if(state.id === id && state.html) return;
     if(state.html) close();
 
     const config = state.elements.get(id);
@@ -53,7 +54,7 @@ export function open(id: string): void {
 
     const container = document.createElement('div');
     container.className = 'ui';
-    container.id = "ui-${id}";
+    container.id = `ui-${id}`;
     container.innerHTML = config.html;
     document.body.appendChild(container);
     
@@ -83,7 +84,7 @@ export function close(): void {
 
     const id = state.id;
     const config = id ? state.elements.get(id) : null;
-    document.body.appendChild(state.html);
+    document.body.removeChild(state.html);
 
     state.html = null;
     state.id = null;
