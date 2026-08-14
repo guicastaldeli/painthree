@@ -30,12 +30,13 @@ export function processKeyboard(deltaTime: number): void {
     right[1] = 0;
     vec3.normalize(right, right);
 
-    if(isKeyPressed('w')) vec3.scaleAndAdd(camera.position, camera.position, front, speed); // Front
-    if(isKeyPressed('s')) vec3.scaleAndAdd(camera.position, camera.position, front, -speed); // Back
-    if(isKeyPressed('d')) vec3.scaleAndAdd(camera.position, camera.position, right, speed); // Left
-    if(isKeyPressed('a')) vec3.scaleAndAdd(camera.position, camera.position, right, -speed); // Right
-    if(isKeyPressed('shift')) camera.position[1] -= speed; // Down
-    if(isKeyPressed(' ')) camera.position[1] += speed; // Up
+    /* Front */ if(isKeyPressed('w')) vec3.scaleAndAdd(camera.position, camera.position, front, speed);
+    /* Back */ if(isKeyPressed('s')) vec3.scaleAndAdd(camera.position, camera.position, front, -speed);
+    /* Right */ if(isKeyPressed('d')) vec3.scaleAndAdd(camera.position, camera.position, right, speed);
+    /* Left */ if(isKeyPressed('a')) vec3.scaleAndAdd(camera.position, camera.position, right, -speed);
+    /* Down */ if(isKeyPressed('shift')) camera.position[1] -= speed;
+    /* Up */ if(isKeyPressed(' ')) camera.position[1] += speed;
+    /* Menu */ if(isKeyPressed('e')) data.openToolMenu();
 
     if(isPointerLocked) {
         camera.yaw += mouseMovement.x * sensv;

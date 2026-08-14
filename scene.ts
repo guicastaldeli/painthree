@@ -2,16 +2,16 @@ import * as index from "./index.js";
 import * as data from "./data.js";
 import * as input from "./index.js";
 
-const POS_X = 0.0;
-const POS_Y = 0.0;
-const POS_Z = 0.0;
-
 /**
  * 
  * Camera
  * 
  */
 let camera: data.Camera | null = null;
+
+const POS_X = 0.0;
+const POS_Y = 0.0;
+const POS_Z = 0.0;
 
 // Set Camera
 function setCamera(): void {

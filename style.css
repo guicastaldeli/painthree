@@ -21,3 +21,30 @@ body {
     overflow: hidden;
     background: #000;
 }
+
+/**
+
+    Tool Menu
+
+    */
+/*
+*
+* Menu
+*
+*/
+#el_menu {
+    width: 100%;
+    height: 10%;
+}
+
+#el_menu--main {
+    width: 100%;
+    height: 100%;
+}
+
+#el_menu--content {
+    width: 100%;
+    height: 100%;
+
+    background-color: black;
+}

@@ -546,3 +546,35 @@ export function updateCameraMatrices(): void {
 export function updateCamera(): void {
     updateCameraMatrices();
 }
+
+/**
+ * 
+ * Tool Menu
+ * 
+ */
+let toolMenuOpened = false;
+
+/* Elements */
+    // Menu
+    const el_menu = `
+        <div class="el_menu--main">
+            <div id="el_menu--content"></div>
+        </div>
+    `;
+
+    function createElMenu(): void {
+        let el_menu_container = document.createElement('div');
+        el_menu_container.className = 'el_menu';
+        el_menu_container.innerHTML = el_menu;
+        document.body.appendChild(el_menu_container);
+    }
+/**/
+
+export function openToolMenu(): void {
+    if(!toolMenuOpened) {
+        createElMenu();
+
+        toolMenuOpened = true;
+        console.log('ststtsts');
+    }
+}
