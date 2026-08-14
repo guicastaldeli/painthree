@@ -227,6 +227,14 @@ export function getAllMeshes(): Buffer[] {
     return val;
 }
 
+export function getMeshId(mesh: Buffer): string | null {
+    for(const [id, m] of meshCache.entries()) {
+        if(m === mesh) return id;
+    }
+
+    return null;
+}
+
 // Remove Mesh
 export function removeMesh(id: string): void {
     const mesh = meshCache.get(id);

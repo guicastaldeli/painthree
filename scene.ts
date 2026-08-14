@@ -1,6 +1,7 @@
 import * as index from "./index.js";
 import * as data from "./data.js";
 import * as input from "./index.js";
+import * as raycast from "./raycast.js";
 import { vec3 } from "gl-matrix";
 
 /**
@@ -39,4 +40,11 @@ export function render(): void {
     data.setMeshRotation('cube', 0, angle, 0);
 
     data.renderAllMeshes();
+
+    const ray = raycast.getRay();
+    for(const mesh of data.getAllMeshes()) {
+        if(raycast.__AABB(ray, mesh)) {
+            console.log(data.getMeshId(mesh));
+        }
+    }
 }

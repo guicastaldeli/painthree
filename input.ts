@@ -1,5 +1,6 @@
 import * as data from "./data.js";
-import * as index from "./index.js"
+import * as index from "./index.js";
+import * as raycast from "./raycast.js";
 import { vec3 } from "gl-matrix";
 
 export const Keys: { [key: string]: boolean } = {};
@@ -91,4 +92,17 @@ export function setupControls(): void {
             mouseMovement.y += e.movementY;
         }
     });
+}
+
+// On Place
+function onPlace(): void {
+    const ray = raycast.getRay();
+    const point = raycast.__farPlane(ray);
+    if(!point) return;
+    
+}
+
+// On Select
+function onSelect(): void {
+    
 }
