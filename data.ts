@@ -388,10 +388,11 @@ export function addMesh(id: string, type: MeshType, position: vec3, color?: vec3
     const data = getMeshData(type);
     const mesh = createMesh(data);
 
+    meshCache.set(id, mesh);
+
     setMeshColor(id, color ?? (data.color ? vec3.fromValues(...data.color) : vec3.fromValues(1, 1, 1)));
     setMeshPosition(id, position[0], position[1], position[2]);
 
-    meshCache.set(id, mesh);
     return mesh;
 }
 

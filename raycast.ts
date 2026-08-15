@@ -35,6 +35,15 @@ export function __farPlane(ray: Ray): vec3 | null {
     );
 }
 
+// At Distance
+export function __atDistance(ray: Ray, distance: number): vec3 {
+    return vec3.fromValues(
+        ray.origin[0] + ray.direction[0] * distance,
+        ray.origin[1] + ray.direction[1] * distance,
+        ray.origin[2] + ray.direction[2] * distance
+    );
+}
+
 // AABB
 export function __AABB(ray: Ray, mesh: data.Buffer): boolean {
     const min = vec3.fromValues(
@@ -48,23 +57,22 @@ export function __AABB(ray: Ray, mesh: data.Buffer): boolean {
         mesh.position[2] + mesh.data.maxBounds[2] * mesh.scale[2]
     );
 
-    let txmin = (min[0] - ray.origin[0]) / ray.direction[0];
-    let txmax = (max[0] - ray.origin[0]) / ray.direction[0];
-    if(txmin > txmax) [txmin, txmax] = [txmax, txmin];
+    let tmin = -Infinity;
+    let tmax = Infinity;
 
-    let tymin = (min[1] - ray.origin[1]) / ray.direction[1];
-    let tymax = (max[1] - ray.origin[1]) / ray.direction[1];
-    if(tymin > tymax) [tymin, tymax] = [tymax, tymin];
+    for(let i = 0; i < 3; i++) {
+        if(Math.abs(ray.direction[i]) < 0.0001) {
+            if(ray.origin[i] < min[i] || ray.origin[i] > max[i]) return false;
+        } else {
+            let t1 = (min[i] - ray.origin[i]) / ray.direction[i];
+            let t2 = (max[i] - ray.origin[i]) / ray.direction[i];
+            if(t1 > t2) [t1, t2] = [t2, t1];
 
-    if(txmin > tymax || tymax > txmax) return false;
-    if(tymax > txmax) txmin = tymin;
-    if(tymax < txmax) txmax = tymax;
+            tmin = Math.max(tmin, t1);
+            tmax = Math.min(tmax, t2);
+            if(tmin > tmax) return false;
+        }
+    }
 
-    let tzmin = (min[2] - ray.origin[2]) / ray.direction[2];
-    let tzmax = (max[2] - ray.origin[2]) / ray.direction[2];
-    if(tzmin > tzmax) [tzmin, tzmax] = [tzmax, tzmin];
-
-    if(txmin > tzmax || tzmin > txmax) return false;
-
-    return true;
+    return tmax > 0;
 }

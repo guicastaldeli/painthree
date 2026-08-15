@@ -33,6 +33,11 @@ export const ToolAddMesh: tool_ToolAddMesh[] = [
         type: data.MeshType.SPHERE
     }*/
 ]
+
+export function isToolAddMesh(tool: Tool | null): tool is tool_ToolAddMesh {
+    const val = tool !== null && 'type' in tool;
+    return val;
+}
 /**
  * 
  */

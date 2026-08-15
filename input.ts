@@ -91,16 +91,30 @@ export function setupControls(): void {
     index.canvas.addEventListener('click', () => {
         if(!isPointerLocked && !tools.isToolMenuOpen()) {
             index.canvas.requestPointerLock();
+            return;
+        }
+
+        if(!isPointerLocked) return;
+
+        if(tools.getActiveTool()) {
+            onPlace();
+        } else {
+            onSelect();
         }
     });
 }
 
 // On Place
 function onPlace(): void {
+    if(!tools.isToolAddMesh(tools.getActiveTool())) return;
+    const tool = tools.getActiveTool() as tools.tool_ToolAddMesh;
+
     const ray = raycast.getRay();
-    const point = raycast.__farPlane(ray);
+    const point = raycast.__atDistance(ray, 5);
     if(!point) return;
-    
+
+    const id = crypto.randomUUID();
+    data.addMesh(id, tool.type, point);
 }
 
 // On Select
