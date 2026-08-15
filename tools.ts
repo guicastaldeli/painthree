@@ -110,7 +110,10 @@ function onOpened(): void {
         if(!id) throw new Error('id error');
 
         const tool = findTool(id);
-        if(tool) setActiveTool(tool);
+        if(tool) {
+            setActiveTool(tool);
+            console.log(`Tool selected: ${tool.label}`);
+        }
     });
 }
 
