@@ -1,5 +1,6 @@
 import * as index from "./index.js";
 import * as ui from "./ui.js";
+import * as tools from "./tools.js";
 import { mat4, vec3 } from "gl-matrix";
 
 /**
@@ -530,15 +531,28 @@ export function updateCamera(): void {
         html: `
             <div class="el_tool_menu--main">
                 <div id="el_tool_menu--content">
-                    <button>TEST!</button>
+                    ${buildTool().map(g => `
+                        ${g.tools.map(t => `
+                            <button id="tool-${t.label}-btn" data-tool="${t.id}">${t.label}</label>
+                        `).join('')}
+                    `).join('')}
                 </div>
             </div>
         `,
         events: [
-            { selector: '.el_tool_menu--close', event: 'click', handler: () => ui.close() }
+            
         ]
     });
 /**/
+
+// Build Tool
+function buildTool(): { category: string, tools: tools.Tool[] }[] {
+    const categories = [...new Set(tools.Tools.map(t => t.category))]
+    return categories.map(cat => ({
+        category: cat,
+        tools: tools.Tools.filter(t => t.category === cat)
+    }));
+}
 
 // Open Tool Menu
 export function openToolMenu(): void {

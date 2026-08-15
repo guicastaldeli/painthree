@@ -6,19 +6,24 @@ import * as raycast from "./raycast.js";
  * Add Mesh
  * 
  */
-export interface ToolAddMesh extends Tool {
+export interface tool_ToolAddMesh extends Tool {
     type: data.MeshType;
+    category: typeof category_ToolAddMesh;
 }
 
-export const ToolAddMeshData: ToolAddMesh[] = [
+const category_ToolAddMesh = 'Add Mesh' as const;
+
+export const ToolAddMesh: tool_ToolAddMesh[] = [
     { 
         id: 'cube',
         label: 'Cube',
+        category: category_ToolAddMesh,
         type: data.MeshType.CUBE
     },
     { 
         id: 'pyramid',
         label: 'Pyramid',
+        category: category_ToolAddMesh,
         type: data.MeshType.PYRAMID
     },
     /*{ ADD LATER.... 
@@ -34,7 +39,13 @@ export const ToolAddMeshData: ToolAddMesh[] = [
 export interface Tool {
     id: string;
     label: string;
+    category: string;
 }
+
+export const Tools: Tool[] = [
+    ...ToolAddMesh
+    //...ToolBrush
+]
 
 let activeTool: Tool | null = null;
 
