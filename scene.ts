@@ -44,7 +44,7 @@ export function render(): void {
     const ray = raycast.getRay();
     for(const mesh of data.getAllMeshes()) {
         if(raycast.__AABB(ray, mesh)) {
-            console.log(data.getMeshId(mesh));
+            //console.log(data.getMeshId(mesh));
         }
     }
 }

@@ -1,6 +1,4 @@
 import * as index from "./index.js";
-import * as ui from "./ui.js";
-import * as tools from "./tools.js";
 import { mat4, vec3 } from "gl-matrix";
 
 /**
@@ -40,7 +38,6 @@ interface AttributeConfig {
  */
 const meshCache: Map<string, Buffer> = new Map();
 let selectedMesh: Buffer | null = null;
-const spawnedTypes: Set<MeshType> = new Set();
 
 export enum MeshType {
     TRIANGLE,
@@ -390,7 +387,6 @@ export function addMesh(id: string, type: MeshType, position: vec3, color?: vec3
 
     const data = getMeshData(type);
     const mesh = createMesh(data);
-    meshCache.set(id, mesh);
 
     setMeshColor(id, color ?? (data.color ? vec3.fromValues(...data.color) : vec3.fromValues(1, 1, 1)));
     setMeshPosition(id, position[0], position[1], position[2]);
@@ -518,43 +514,4 @@ export function updateCameraMatrices(): void {
 // Update Camera
 export function updateCamera(): void {
     updateCameraMatrices();
-}
-
-/**
- * 
- * Tool Menu
- * 
- */
-/* Elements */
-    ui.register('el_tool_menu', {
-        id: 'el_tool_menu',
-        html: `
-            <div class="el_tool_menu--main">
-                <div id="el_tool_menu--content">
-                    ${buildTool().map(g => `
-                        ${g.tools.map(t => `
-                            <button id="tool-${t.label}-btn" data-tool="${t.id}">${t.label}</label>
-                        `).join('')}
-                    `).join('')}
-                </div>
-            </div>
-        `,
-        events: [
-            
-        ]
-    });
-/**/
-
-// Build Tool
-function buildTool(): { category: string, tools: tools.Tool[] }[] {
-    const categories = [...new Set(tools.Tools.map(t => t.category))]
-    return categories.map(cat => ({
-        category: cat,
-        tools: tools.Tools.filter(t => t.category === cat)
-    }));
-}
-
-// Open Tool Menu
-export function openToolMenu(): void {
-    ui.toggle('el_tool_menu');
 }

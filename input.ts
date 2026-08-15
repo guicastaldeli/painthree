@@ -1,4 +1,5 @@
 import * as data from "./data.js";
+import * as tools from "./tools.js";
 import * as index from "./index.js";
 import * as raycast from "./raycast.js";
 import { vec3 } from "gl-matrix";
@@ -48,7 +49,7 @@ export function processKeyboard(deltaTime: number): void {
     /* Left */ if(isKeyPressed('a')) vec3.scaleAndAdd(camera.position, camera.position, right, -speed);
     /* Down */ if(isKeyPressed('shift')) camera.position[1] -= speed;
     /* Up */ if(isKeyPressed(' ')) camera.position[1] += speed;
-    /* Menu */ if(consumeKey('e')) data.openToolMenu();
+    /* Menu */ if(consumeKey('e')) tools.openToolMenu();
 
     if(isPointerLocked) {
         camera.yaw += mouseMovement.x * sensv;

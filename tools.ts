@@ -1,17 +1,18 @@
 import * as data from "./data.js";
-import * as raycast from "./raycast.js";
+import * as ui from "./ui.js";
+import * as index from "./index.js";
 
 /**
  * 
  * Add Mesh
  * 
  */
+const category_ToolAddMesh = 'Add Mesh' as const;
+
 export interface tool_ToolAddMesh extends Tool {
     type: data.MeshType;
     category: typeof category_ToolAddMesh;
 }
-
-const category_ToolAddMesh = 'Add Mesh' as const;
 
 export const ToolAddMesh: tool_ToolAddMesh[] = [
     { 
@@ -58,4 +59,75 @@ export function getActiveTool(): Tool | null {
 // Set Active Tool
 export function setActiveTool(tool: Tool | null): void {
     activeTool = tool;
+}
+
+// Find Tool
+export function findTool(id: string): Tool | null {
+    const val = Tools.find(t => t.id === id) ?? null;
+    return val;
+}
+
+/**
+ * 
+ * Tool Menu
+ * 
+ */
+/* Elements */
+    ui.register('el_tool_menu', {
+        id: 'el_tool_menu',
+        html: `
+            <div class="el_tool_menu--main">
+                <div id="el_tool_menu--content">
+                    ${buildTool().map(g => `
+                        ${g.tools.map(t => `
+                            <button id="tool-${t.label}-btn" data-tool="${t.id}">${t.label}</button>
+                        `).join('')}
+                    `).join('')}
+                </div>
+            </div>
+        `,
+        onOpen: () => {
+            onOpened();
+        },
+        onClose: () => {
+            onClosed();
+        }
+    });
+/**/
+
+// On Opened
+function onOpened(): void {
+    const content = document.getElementById('el_tool_menu--content');
+    if(!content) return;
+
+    content.addEventListener('click', (e) => {
+        const btn = (e.target as HTMLElement).closest('[data-tool]');
+        if(!btn) throw new Error('button error');
+
+        const id = btn.getAttribute('data-tool');
+        if(!id) throw new Error('id error');
+
+        const tool = findTool(id);
+        if(tool) setActiveTool(tool);
+    });
+}
+
+// On Closed
+function onClosed(): void {
+    index.canvas.requestPointerLock();
+}
+
+// Build Tool
+function buildTool(): { category: string, tools: Tool[] }[] {
+    const categories = [...new Set(Tools.map(t => t.category))]
+    return categories.map(cat => ({
+        category: cat,
+        tools: Tools.filter(t => t.category === cat)
+    }));
+}
+
+// Open Tool Menu
+export function openToolMenu(): void {
+    if(document.pointerLockElement) document.exitPointerLock();
+    ui.toggle('el_tool_menu');
 }

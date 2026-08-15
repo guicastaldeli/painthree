@@ -71,7 +71,7 @@ export function open(id: string): void {
         config.onOpen();
     }
 
-    console.log(`UI "${id}" opened`);
+    //console.log(`UI "${id}" opened`);
 }
 
 /**
@@ -93,5 +93,5 @@ export function close(): void {
         config.onClose();
     }
 
-    console.log(`UI "${id}" closed`);
+    //console.log(`UI "${id}" closed`);
 }
