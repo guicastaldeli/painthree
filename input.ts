@@ -78,12 +78,6 @@ export function setupControls(): void {
         Keys[e.key.toUpperCase()] = false;
     });
 
-    index.canvas.addEventListener('click', () => {
-        if(!isPointerLocked) {
-            index.canvas.requestPointerLock();
-        }
-    });
-
     document.addEventListener('pointerlockchange', () => {
         isPointerLocked = document.pointerLockElement === index.canvas;
     });
@@ -91,6 +85,12 @@ export function setupControls(): void {
         if(isPointerLocked) {
             mouseMovement.x += e.movementX;
             mouseMovement.y += e.movementY;
+        }
+    });
+
+    index.canvas.addEventListener('click', () => {
+        if(!isPointerLocked && !tools.isToolMenuOpen()) {
+            index.canvas.requestPointerLock();
         }
     });
 }

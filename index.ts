@@ -1,6 +1,7 @@
 import * as scene from "./scene.js";
 import * as input from "./input.js";
 import * as data from "./data.js";
+import * as tools from "./tools.js";
 
 export const canvas = <HTMLCanvasElement>document.getElementById('content');
 export const gl = <WebGL2RenderingContext>canvas.getContext('webgl2');
@@ -160,6 +161,9 @@ async function init(): Promise<void> {
     input.setupControls();
 
     window.addEventListener('resize', resize);
+
+    tools.openToolMenu();
+    
     render();
 }
 

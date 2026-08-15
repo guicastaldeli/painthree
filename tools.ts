@@ -72,12 +72,14 @@ export function findTool(id: string): Tool | null {
  * Tool Menu
  * 
  */
+const elToolMenu = 'el_tool_menu';
+
 /* Elements */
-    ui.register('el_tool_menu', {
-        id: 'el_tool_menu',
+    ui.register(elToolMenu, {
+        id: elToolMenu,
         html: `
-            <div class="el_tool_menu--main">
-                <div id="el_tool_menu--content">
+            <div class="${elToolMenu}--main">
+                <div id="${elToolMenu}--content">
                     ${buildTool().map(g => `
                         ${g.tools.map(t => `
                             <button id="tool-${t.label}-btn" data-tool="${t.id}">${t.label}</button>
@@ -97,7 +99,7 @@ export function findTool(id: string): Tool | null {
 
 // On Opened
 function onOpened(): void {
-    const content = document.getElementById('el_tool_menu--content');
+    const content = document.getElementById(`${elToolMenu}--content`);
     if(!content) return;
 
     content.addEventListener('click', (e) => {
@@ -129,5 +131,11 @@ function buildTool(): { category: string, tools: Tool[] }[] {
 // Open Tool Menu
 export function openToolMenu(): void {
     if(document.pointerLockElement) document.exitPointerLock();
-    ui.toggle('el_tool_menu');
+    ui.toggle(elToolMenu);
+}
+
+// Is Tool Menu Open
+export function isToolMenuOpen(): boolean {
+    const val = ui.isOpen(elToolMenu);
+    return val;
 }
