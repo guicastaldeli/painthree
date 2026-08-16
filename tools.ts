@@ -42,6 +42,33 @@ export function isToolAddMesh(tool: Tool | null): tool is tool_ToolAddMesh {
  * 
  */
 
+/**
+ * 
+ * Eraser
+ * 
+ */
+export const category_ToolEraser = 'Eraser' as const;
+
+export interface tool_ToolEraser extends Tool {
+    category: typeof category_ToolEraser;
+}
+
+export const ToolEraser: tool_ToolEraser[] = [
+    {
+        id: 'eraser',
+        label: 'Eraser',
+        category: category_ToolEraser
+    }
+];
+
+export function isToolEraser(tool: Tool | null): tool is tool_ToolEraser {
+    const val = tool !== null && tool.category === category_ToolEraser;
+    return val;
+}
+/**
+ * 
+ */
+
 export interface Tool {
     id: string;
     label: string;
@@ -49,9 +76,9 @@ export interface Tool {
 }
 
 export const Tools: Tool[] = [
-    ...ToolAddMesh
-    //...ToolBrush
-]
+    ...ToolAddMesh,
+    ...ToolEraser
+];
 
 let activeTool: Tool | null = null;
 

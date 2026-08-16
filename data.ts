@@ -1,5 +1,6 @@
 import * as index from "./index.js";
 import { mat4, vec3 } from "gl-matrix";
+import { Result } from "./raycast.js";
 
 /**
  * 
@@ -301,7 +302,7 @@ function createMesh(data: MeshData): Buffer {
         if(!buffer) throw new Error(`Failed to create buffer for ${name}`);
 
         index.gl.bindBuffer(index.gl.ARRAY_BUFFER, buffer);
-        index.gl.bufferData(index.gl.ARRAY_BUFFER, data, index.gl.STATIC_DRAW);
+        index.gl.bufferData(index.gl.ARRAY_BUFFER, data, index.gl.DYNAMIC_DRAW);
 
         const loc = index.gl.getAttribLocation(index.shaderProgram!, name);
         if(loc !== -1) {
@@ -318,7 +319,7 @@ function createMesh(data: MeshData): Buffer {
     if(!indexBuffer) throw new Error('Failed to create index buffer');
 
     index.gl.bindBuffer(index.gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-    index.gl.bufferData(index.gl.ELEMENT_ARRAY_BUFFER, data.indices, index.gl.STATIC_DRAW);
+    index.gl.bufferData(index.gl.ELEMENT_ARRAY_BUFFER, data.indices, index.gl.DYNAMIC_DRAW);
 
     index.gl.bindVertexArray(null);
     index.gl.bindBuffer(index.gl.ARRAY_BUFFER, null);
@@ -332,7 +333,11 @@ function createMesh(data: MeshData): Buffer {
         indexBuffer,
         //normalBuffer,
         indexCount: data.indices.length,
-        data,
+        data: {
+            ...data,
+            vertices: new Float32Array(data.vertices),
+            indices: new Uint16Array(data.indices)
+        },
         modelMatrix: mat4.create(),
         rotation: vec3.create(),
         position: vec3.create(),
@@ -394,6 +399,30 @@ export function addMesh(id: string, type: MeshType, position: vec3, color?: vec3
     setMeshPosition(id, position[0], position[1], position[2]);
 
     return mesh;
+}
+
+// Erase Mesh
+export function eraseMesh(result: Result, id: string): void {
+    const mesh = getMesh(id);
+    if(!mesh) return;
+
+    mesh.data.vertices = result.vertices;
+    mesh.data.indices = result.indices;
+
+    index.gl.bindVertexArray(mesh.vao);
+
+    index.gl.bindBuffer(index.gl.ARRAY_BUFFER, mesh.positionBuffer);
+    index.gl.bufferData(index.gl.ARRAY_BUFFER, result.vertices, index.gl.DYNAMIC_DRAW);
+
+    index.gl.bindBuffer(index.gl.ELEMENT_ARRAY_BUFFER, mesh.indexBuffer);
+    index.gl.bufferData(index.gl.ELEMENT_ARRAY_BUFFER, result.indices, index.gl.DYNAMIC_DRAW);
+
+    index.gl.bindVertexArray(null);
+
+    index.gl.bindBuffer(index.gl.ARRAY_BUFFER, null);
+    index.gl.bindBuffer(index.gl.ELEMENT_ARRAY_BUFFER, null);
+
+    mesh.indexCount = result.indices.length;
 }
 
 /**
