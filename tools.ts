@@ -76,20 +76,26 @@ export function isToolEraser(tool: Tool | null): tool is tool_ToolEraser {
  */
 export const category_ToolPalette = 'Palette' as const;
 
-const PaletteRenderer = (tool: tool_ToolPalette, rgb: string) => 
-    `<button class="tool-btn palette-btn" data-tool="${tool.id}" style="background-color: rgb(${rgb})"></button>`;
+const PaletteRenderer = (tool: tool_ToolPalette, rgb: string, hex: string, showColorPicker: boolean) => 
+    `<button class="tool-btn palette-btn" data-tool="${tool.id}" style="background-color: rgb(${rgb})"></button>
+        ${showColorPicker ? `<input type="color" class="color-picker" value="${hex}" data-tool="${tool.id}" onclick="event.stopPropagation()">` : '' }
+        `;
 
 export interface tool_ToolPalette extends Tool {
     color: [number, number, number];
     category: typeof category_ToolPalette;
 }
 
-export const ToolPalette: tool_ToolPalette[] = data.Palette.map((color, i) => ({
-    id: `palette_${i}`,
-    label: `Color ${i}`,
-    category: category_ToolPalette,
-    color
-}));
+export const ToolPalette = {
+    get _(): tool_ToolPalette[] {
+        return data.Palette._.map((color, i) => ({
+            id: `palette_${i}`,
+            label: `Color ${i}`,
+            category: category_ToolPalette,
+            color
+        }));
+    }
+}
 
 export function isToolPalette(tool: Tool | null): tool is tool_ToolPalette {
     const val = tool !== null && tool.category === category_ToolPalette;
@@ -103,13 +109,42 @@ function activePalette(tool: Tool): void {
     console.log(`Color selected: ${paletteTool.color}`);
 }
 
-function ToolPaletteRenderer(tool: Tool) {
+function ToolPaletteRenderer(tool: Tool, isLast: boolean): string {
     const t = tool as tool_ToolPalette;
     const v = 255;
     const rgb = t.color.map(c => Math.round(c * v)).join(',');
     
-    const renderer = PaletteRenderer(t, rgb);
+    const renderer = PaletteRenderer(t, rgb, data.rgbToHex(t.color), isLast);
     return renderer;
+}
+
+function updateColor(content: HTMLElement): void {
+    // Active Color
+    document.addEventListener('active-color-updated', (e) => {
+        const { color } = (e as CustomEvent).detail;
+        const btn = content.querySelector('[data-tool="palette_0"]') as HTMLElement;
+        if(btn) btn.style.backgroundColor = `rgb(${color.map((c: number) => Math.round(c * 255)).join(',')})`;
+    });
+
+    // Color Picker
+    content.addEventListener('input', (e) => {
+        const picker = (e.target as HTMLElement).closest('.color-picker') as HTMLInputElement;
+        if(!picker) return;
+
+        const rgb = data.hexToRgb(picker.value);
+        data.setNewColor(rgb);
+        data.setActiveColor(rgb);
+
+        picker.dispatchEvent(new CustomEvent('palette-updated', {
+            bubbles: true,
+            detail: { rgb }
+        }));
+    });
+    content.addEventListener('palette-updated', (e) => {
+        const { rgb } = (e as CustomEvent).detail;
+        const btn = content.querySelector('.palette-btn:last-of-type') as HTMLElement;
+        if(btn) btn.style.backgroundColor = `rgb(${rgb.map((c: number) => Math.round(c * 255)).join(',')})`;
+    });
 }
 /**
  * 
@@ -122,11 +157,15 @@ export interface Tool {
     category: string;
 }
 
-export const Tools: Tool[] = [
-    ...ToolAddMesh,
-    ...ToolEraser,
-    ...ToolPalette
-];
+export const Tools = {
+    get data(): Tool[] {
+        return [
+            ...ToolAddMesh,
+            ...ToolEraser,
+            ...ToolPalette._
+        ]
+    }
+}
 
 let activeTool: Tool | null = null;
 
@@ -143,7 +182,7 @@ export function setActiveTool(tool: Tool | null): void {
 
 // Find Tool
 export function findTool(id: string): Tool | null {
-    const val = Tools.find(t => t.id === id) ?? null;
+    const val = Tools.data.find(t => t.id === id) ?? null;
     return val;
 }
 
@@ -155,17 +194,17 @@ export function findTool(id: string): Tool | null {
 const elToolMenu = 'el_tool_menu';
 
 /* Renderer */
-    const DefaultRenderer = (tool: Tool) => 
+    const DefaultRenderer = (tool: Tool, _index: number, _arr: Tool[]) => 
         `<button class="tool-btn" data-tool="${tool.id}">${tool.label}</button>`;
 
-    const ToolRenderers: Map<string, (tool: Tool) => string> = new Map([
+    const ToolRenderers: Map<string, (tool: Tool, index: number, arr: Tool[]) => string> = new Map([
         [category_ToolAddMesh, DefaultRenderer],
         [category_ToolEraser, DefaultRenderer],
-        [category_ToolPalette, (tool) => ToolPaletteRenderer(tool)]
+        [category_ToolPalette, (tool, index, arr) => ToolPaletteRenderer(tool, index === arr.length - 1)]
     ]);
 
-    function RenderTool(tool: Tool): string {
-        const val = (ToolRenderers.get(tool.category) ?? DefaultRenderer)(tool);
+    function RenderTool(tool: Tool, index: number, arr: Tool[]): string {
+        const val = (ToolRenderers.get(tool.category) ?? DefaultRenderer)(tool, index, arr);
         return val;
     }
 /**/
@@ -177,7 +216,7 @@ const elToolMenu = 'el_tool_menu';
             <div class="${elToolMenu}--main">
                 <div id="${elToolMenu}--content">
                     ${buildTool().map(g => `
-                        ${g.tools.map(t => RenderTool(t)).join('')}
+                        ${g.tools.map((t, i, arr) => RenderTool(t, i, arr)).join('')}
                     `).join('')}
                 </div>
             </div>
@@ -195,6 +234,8 @@ const elToolMenu = 'el_tool_menu';
 function onOpened(): void {
     const content = document.getElementById(`${elToolMenu}--content`);
     if(!content) return;
+
+    updateColor(content);
 
     content.addEventListener('click', (e) => {
         const btn = (e.target as HTMLElement).closest('[data-tool]');
@@ -221,10 +262,10 @@ function onClosed(): void {
 
 // Build Tool
 function buildTool(): { category: string, tools: Tool[] }[] {
-    const categories = [...new Set(Tools.map(t => t.category))]
+    const categories = [...new Set(Tools.data.map(t => t.category))]
     return categories.map(cat => ({
         category: cat,
-        tools: Tools.filter(t => t.category === cat)
+        tools: Tools.data.filter(t => t.category === cat)
     }));
 }
 

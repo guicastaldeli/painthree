@@ -527,19 +527,26 @@ export function updateCamera(): void {
  * 
  */
 let activeColor: [number, number, number] = [0.0, 0.0, 0.0];
+let newColor: [number, number, number] = [0.5, 0.5, 0.5];
 
-export const Palette: [number, number, number][] = [
-    [0.0, 0.0, 0.0], // Black (default)
-    [1.0, 1.0, 1.0], // White
-    [1.0, 0.0, 0.0], // Red
-    [0.0, 1.0, 0.0], // Green
-    [0.0, 0.0, 1.0], // Blue
-    [1.0, 1.0, 0.0], // Yellow
-    [1.0, 0.5, 0.0], // Orange
-    [0.5, 0.0, 0.5], // Purple
-    [0.0, 1.0, 1.0], // Cyan
-    [1.0, 0.0, 1.0], // Magenta
-];
+export const Palette = {
+    get _(): [number, number, number][] {
+        return [
+            activeColor, // Active Color
+            [0.0, 0.0, 0.0], // Black (default)
+            [1.0, 1.0, 1.0], // White
+            [1.0, 0.0, 0.0], // Red
+            [0.0, 1.0, 0.0], // Green
+            [0.0, 0.0, 1.0], // Blue
+            [1.0, 1.0, 0.0], // Yellow
+            [1.0, 0.5, 0.0], // Orange
+            [0.5, 0.0, 0.5], // Purple
+            [0.0, 1.0, 1.0], // Cyan
+            [1.0, 0.0, 1.0], // Magenta
+            newColor // New Color
+        ];
+    } 
+}
 
 // Get Active Color
 export function getActiveColor(): [number, number, number] {
@@ -550,4 +557,30 @@ export function getActiveColor(): [number, number, number] {
 // Set Active Color
 export function setActiveColor(color: [number, number, number]): void {
     activeColor = color;
+    document.dispatchEvent(new CustomEvent('active-color-updated', { detail: { color }}));
+}
+
+// Set New Color
+export function setNewColor(color: [number, number, number]): void {
+    newColor = color;
+}
+
+// Rgb to Hex
+export function rgbToHex(rgb: [number, number, number]): string {
+    const hex = rgb.map(c => Math.round(c * 255).toString(16).padStart(2, '0')).join('');
+    return `#${hex}`;
+}
+
+// Hex to Rgb
+export function hexToRgb(hex: string): [number, number, number] {
+    const regex = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i;
+    
+    const result = regex.exec(hex);
+    if(!result) return [0, 0, 0];
+
+    return [
+        parseInt(result[1], 16) / 255,
+        parseInt(result[2], 16) / 255,
+        parseInt(result[3], 16) / 255
+    ];
 }
