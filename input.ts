@@ -2,10 +2,11 @@ import * as data from "./data.js";
 import * as tools from "./tools.js";
 import * as index from "./index.js";
 import * as raycast from "./raycast.js";
-import { mat4, vec3 } from "gl-matrix";
+import { vec3 } from "gl-matrix";
 
 export const Keys: { [key: string]: boolean } = {};
 
+let mouseHeld = false;
 let isPointerLocked = false;
 let mouseMovement = { x: 0, y: 0 };
 
@@ -65,6 +66,11 @@ export function processKeyboard(deltaTime: number): void {
 
         data.updateCameraVectors();
     }
+
+    if(mouseHeld) {
+        if(tools.isToolAddMesh(tools.getActiveTool())) onPlace();
+        else if(tools.isToolEraser(tools.getActiveTool())) onErase();
+    }
 }
 
 // Setup Controls
@@ -93,13 +99,14 @@ export function setupControls(): void {
     index.canvas.addEventListener('click', () => {
         if(!isPointerLocked && !tools.isToolMenuOpen()) {
             index.canvas.requestPointerLock();
-            return;
         }
-
+    });
+    index.canvas.addEventListener('mousedown', () => {
         if(!isPointerLocked) return;
-
-        if(tools.isToolAddMesh(tools.getActiveTool())) onPlace();
-        else if(tools.isToolEraser(tools.getActiveTool())) onErase();
+        mouseHeld = true;
+    });
+    index.canvas.addEventListener('mouseup', () => {
+        mouseHeld = false;
     });
 }
 
@@ -116,13 +123,12 @@ function onPlace(): void {
     data.addMesh(id, tool.type, point);
 }
 
-// On Erase
+// On Select
 function onErase(): void {
     const ray = raycast.getRay();
-    const center = raycast.__atDistance(ray, MAX_DISTANCE);
-    
+
     let nearestMesh: data.Buffer | null = null;
-    let nearestDist = Infinity;
+    let nearestDist = MAX_DISTANCE * 2;
 
     for(const mesh of data.getAllMeshes()) {
         if(!raycast.__AABB(ray, mesh)) continue;
@@ -137,10 +143,7 @@ function onErase(): void {
     if(!nearestMesh) return;
 
     const meshId = data.getMeshId(nearestMesh);
-    if(!meshId) throw new Error('No mesh id!');
+    if(!meshId) return;
 
-    const invModel = mat4.invert(mat4.create(), nearestMesh.modelMatrix);
-    const localCenter = vec3.transformMat4(vec3.create(), center, invModel!);
-
-    data.eraseMesh(raycast.subtractCube(nearestMesh.data.vertices, nearestMesh.data.indices as Uint16Array, localCenter, 2.0), meshId);
+    data.removeMesh(meshId);
 }

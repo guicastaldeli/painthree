@@ -1,6 +1,5 @@
 import * as index from "./index.js";
 import { mat4, vec3 } from "gl-matrix";
-import { Result } from "./raycast.js";
 
 /**
  * 
@@ -399,30 +398,6 @@ export function addMesh(id: string, type: MeshType, position: vec3, color?: vec3
     setMeshPosition(id, position[0], position[1], position[2]);
 
     return mesh;
-}
-
-// Erase Mesh
-export function eraseMesh(result: Result, id: string): void {
-    const mesh = getMesh(id);
-    if(!mesh) return;
-
-    mesh.data.vertices = result.vertices;
-    mesh.data.indices = result.indices;
-
-    index.gl.bindVertexArray(mesh.vao);
-
-    index.gl.bindBuffer(index.gl.ARRAY_BUFFER, mesh.positionBuffer);
-    index.gl.bufferData(index.gl.ARRAY_BUFFER, result.vertices, index.gl.DYNAMIC_DRAW);
-
-    index.gl.bindBuffer(index.gl.ELEMENT_ARRAY_BUFFER, mesh.indexBuffer);
-    index.gl.bufferData(index.gl.ELEMENT_ARRAY_BUFFER, result.indices, index.gl.DYNAMIC_DRAW);
-
-    index.gl.bindVertexArray(null);
-
-    index.gl.bindBuffer(index.gl.ARRAY_BUFFER, null);
-    index.gl.bindBuffer(index.gl.ELEMENT_ARRAY_BUFFER, null);
-
-    mesh.indexCount = result.indices.length;
 }
 
 /**
