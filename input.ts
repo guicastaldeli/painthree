@@ -5,10 +5,20 @@ import * as raycast from "./raycast.js";
 import { vec3 } from "gl-matrix";
 
 export const Keys: { [key: string]: boolean } = {};
+const Actions = new Map<string, () => void>([
+    [tools.category_ToolAddMesh, onPlace],
+    [tools.category_ToolEraser, onErase]
+]);
 
-let mouseHeld = false;
 let isPointerLocked = false;
 let mouseMovement = { x: 0, y: 0 };
+
+let mouseHeld = false;
+let holdCooldown = 0;
+let hasTriggeredThisPress = false;
+
+const HOLD_INITIAL_DELAY = 0.15;
+const HOLD_REPEAT_DELAY = 0.0001;
 
 const MAX_DISTANCE = 2;
 
@@ -16,6 +26,15 @@ const MAX_DISTANCE = 2;
 function isKeyPressed(key: string): boolean {
     const val = Keys[key.toLowerCase()] || Keys[key.toUpperCase()] || false;
     return val;
+}
+
+// Execute Action
+function executeAction(): void {
+    const tool = tools.getActiveTool();
+    if(!tool) return;
+
+    const fn = Actions.get(tool.category);
+    if(fn) fn();
 }
 
 // Cosume Key
@@ -67,9 +86,23 @@ export function processKeyboard(deltaTime: number): void {
         data.updateCameraVectors();
     }
 
+    if(holdCooldown > 0) {
+        holdCooldown -= deltaTime;
+    }
     if(mouseHeld) {
-        if(tools.isToolAddMesh(tools.getActiveTool())) onPlace();
-        else if(tools.isToolEraser(tools.getActiveTool())) onErase();
+        const tool = tools.getActiveTool();
+        if(!tool) return;
+
+        if(!Actions.has(tool.category)) return;
+        if(!hasTriggeredThisPress) {
+            executeAction();
+            hasTriggeredThisPress = true;
+            holdCooldown = HOLD_INITIAL_DELAY;
+        }
+        else if(holdCooldown <= 0) {
+            executeAction();
+            holdCooldown = HOLD_REPEAT_DELAY;
+        }
     }
 }
 
@@ -104,9 +137,13 @@ export function setupControls(): void {
     index.canvas.addEventListener('mousedown', () => {
         if(!isPointerLocked) return;
         mouseHeld = true;
+        hasTriggeredThisPress = false;
+        holdCooldown = 0;
     });
     index.canvas.addEventListener('mouseup', () => {
         mouseHeld = false;
+        hasTriggeredThisPress = false;
+        holdCooldown = 0;
     });
 }
 
@@ -120,7 +157,11 @@ function onPlace(): void {
     if(!point) return;
 
     const id = crypto.randomUUID();
-    data.addMesh(id, tool.type, point);
+    
+    const activeColor = data.getActiveColor();
+    const colorVec = vec3.fromValues(activeColor[0], activeColor[1], activeColor[2]);
+
+    data.addMesh(id, tool.type, point, colorVec);
 }
 
 // On Select

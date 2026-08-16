@@ -7,7 +7,7 @@ import * as index from "./index.js";
  * Add Mesh
  * 
  */
-const category_ToolAddMesh = 'Add Mesh' as const;
+export const category_ToolAddMesh = 'Add Mesh' as const;
 
 export interface tool_ToolAddMesh extends Tool {
     type: data.MeshType;
@@ -69,6 +69,53 @@ export function isToolEraser(tool: Tool | null): tool is tool_ToolEraser {
  * 
  */
 
+/**
+ * 
+ * Palette
+ * 
+ */
+export const category_ToolPalette = 'Palette' as const;
+
+const PaletteRenderer = (tool: tool_ToolPalette, rgb: string) => 
+    `<button class="tool-btn palette-btn" data-tool="${tool.id}" style="background-color: rgb(${rgb})"></button>`;
+
+export interface tool_ToolPalette extends Tool {
+    color: [number, number, number];
+    category: typeof category_ToolPalette;
+}
+
+export const ToolPalette: tool_ToolPalette[] = data.Palette.map((color, i) => ({
+    id: `palette_${i}`,
+    label: `Color ${i}`,
+    category: category_ToolPalette,
+    color
+}));
+
+export function isToolPalette(tool: Tool | null): tool is tool_ToolPalette {
+    const val = tool !== null && tool.category === category_ToolPalette;
+    return val;
+}
+
+function activePalette(tool: Tool): void {
+    const paletteTool = tool as tool_ToolPalette;
+    data.setActiveColor(paletteTool.color);
+    
+    console.log(`Color selected: ${paletteTool.color}`);
+}
+
+function ToolPaletteRenderer(tool: Tool) {
+    const t = tool as tool_ToolPalette;
+    const v = 255;
+    const rgb = t.color.map(c => Math.round(c * v)).join(',');
+    
+    const renderer = PaletteRenderer(t, rgb);
+    return renderer;
+}
+/**
+ * 
+ */
+
+
 export interface Tool {
     id: string;
     label: string;
@@ -77,7 +124,8 @@ export interface Tool {
 
 export const Tools: Tool[] = [
     ...ToolAddMesh,
-    ...ToolEraser
+    ...ToolEraser,
+    ...ToolPalette
 ];
 
 let activeTool: Tool | null = null;
@@ -106,6 +154,22 @@ export function findTool(id: string): Tool | null {
  */
 const elToolMenu = 'el_tool_menu';
 
+/* Renderer */
+    const DefaultRenderer = (tool: Tool) => 
+        `<button class="tool-btn" data-tool="${tool.id}">${tool.label}</button>`;
+
+    const ToolRenderers: Map<string, (tool: Tool) => string> = new Map([
+        [category_ToolAddMesh, DefaultRenderer],
+        [category_ToolEraser, DefaultRenderer],
+        [category_ToolPalette, (tool) => ToolPaletteRenderer(tool)]
+    ]);
+
+    function RenderTool(tool: Tool): string {
+        const val = (ToolRenderers.get(tool.category) ?? DefaultRenderer)(tool);
+        return val;
+    }
+/**/
+
 /* Elements */
     ui.register(elToolMenu, {
         id: elToolMenu,
@@ -113,9 +177,7 @@ const elToolMenu = 'el_tool_menu';
             <div class="${elToolMenu}--main">
                 <div id="${elToolMenu}--content">
                     ${buildTool().map(g => `
-                        ${g.tools.map(t => `
-                            <button id="tool-${t.label}-btn" data-tool="${t.id}">${t.label}</button>
-                        `).join('')}
+                        ${g.tools.map(t => RenderTool(t)).join('')}
                     `).join('')}
                 </div>
             </div>
@@ -143,8 +205,11 @@ function onOpened(): void {
 
         const tool = findTool(id);
         if(tool) {
+            if(isToolPalette(tool)) {
+                activePalette(tool);
+                return;
+            }
             setActiveTool(tool);
-            console.log(`Tool selected: ${tool.label}`);
         }
     });
 }

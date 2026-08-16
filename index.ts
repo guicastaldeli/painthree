@@ -86,7 +86,7 @@ async function createShaderProgram(): Promise<void> {
 let lastTime = 0;
 let deltaTime = 0;
 
-function setTick(): number {
+function tick(): number {
     const currentTime = performance.now();
     deltaTime = (currentTime - lastTime) / 1000;
     lastTime = currentTime;
@@ -140,7 +140,7 @@ function setRender(): void {
 }
 
 function render() {
-    setTick();
+    tick();
     setRender();
     requestAnimationFrame(render);
 }

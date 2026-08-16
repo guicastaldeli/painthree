@@ -520,3 +520,34 @@ export function updateCameraMatrices(): void {
 export function updateCamera(): void {
     updateCameraMatrices();
 }
+
+/**
+ * 
+ * Palette
+ * 
+ */
+let activeColor: [number, number, number] = [0.0, 0.0, 0.0];
+
+export const Palette: [number, number, number][] = [
+    [0.0, 0.0, 0.0], // Black (default)
+    [1.0, 1.0, 1.0], // White
+    [1.0, 0.0, 0.0], // Red
+    [0.0, 1.0, 0.0], // Green
+    [0.0, 0.0, 1.0], // Blue
+    [1.0, 1.0, 0.0], // Yellow
+    [1.0, 0.5, 0.0], // Orange
+    [0.5, 0.0, 0.5], // Purple
+    [0.0, 1.0, 1.0], // Cyan
+    [1.0, 0.0, 1.0], // Magenta
+];
+
+// Get Active Color
+export function getActiveColor(): [number, number, number] {
+    const val = activeColor;
+    return val;
+}
+
+// Set Active Color
+export function setActiveColor(color: [number, number, number]): void {
+    activeColor = color;
+}
