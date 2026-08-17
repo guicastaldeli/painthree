@@ -121,7 +121,7 @@ function activePalette(tool: Tool): void {
     const rgb = `rgb(${(tool as tool_ToolPalette).color.map(c => Math.round(c * 255)).join(',')})`;
     
     data.SetValue('activeColor', rgb);
-    data.setActiveColor((tool as tool_ToolPalette).color);
+    //data.setActiveColor((tool as tool_ToolPalette).color);
     
     return;
 }

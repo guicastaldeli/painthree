@@ -33,6 +33,8 @@ let angle = 0;
 export function render(): void {
     setCamera();
     data.updateCamera();
+
+    data.updateCollision(data.getCameraPosition());
     
     angle += 0.01;
 

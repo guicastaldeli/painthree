@@ -610,3 +610,32 @@ export function hexToRgb(hex: string): [number, number, number] {
         parseInt(result[3], 16) / 255
     ];
 }
+
+/**
+ * 
+ * Collision
+ * 
+ */
+const COLL_SIZE = 10;
+let boundary: number = COLL_SIZE;
+
+// Get Collision
+export function getCollision(): number {
+    const val = boundary;
+    return val;
+}
+
+// Apply Collision
+function applyCollision(position: vec3): void {
+    if(boundary === 0) return;
+
+    const half = boundary / 2;
+    position[0] = Math.max(-half, Math.min(half, position[0]));
+    position[1] = Math.max(-half, Math.min(half, position[1]));
+    position[2] = Math.max(-half, Math.min(half, position[2]));
+}
+
+// Update Collision
+export function updateCollision(position: vec3): void {
+    applyCollision(position);
+}
