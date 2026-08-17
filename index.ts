@@ -125,16 +125,37 @@ function setRender(): void {
     const time = getDeltaTime();
 
     gl.useProgram(shaderProgram);
-
     resize();
+
+    if(!data.getScreenTexture()) {
+        data.createScreenTexture();
+    }
+
+    const framebuffer = data.getScreenFramebuffer();
+    if(framebuffer) {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+        
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.LESS);
+        gl.clearColor(1.0, 0.3, 0.5, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        
+        scene.renderScene();
+        
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, null);
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, null);
+    }
 
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LESS);
-
     gl.clearColor(1.0, 0.3, 0.5, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    scene.render();
+    
+    scene.renderScene();
+    scene.renderHud();
 
     input.processKeyboard(time);
 }

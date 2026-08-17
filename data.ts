@@ -64,6 +64,7 @@ interface AttributeConfig {
  * 
  */
 const meshCache: Map<string, Buffer> = new Map();
+const hudIds: Set<string> = new Set();
 let selectedMesh: Buffer | null = null;
 
 export enum MeshType {
@@ -78,6 +79,7 @@ export interface MeshData {
     vertices: Float32Array;
     indices: Uint16Array | Uint32Array;
     color?: [number, number, number];
+    texCoords?: Float32Array;
     normals?: Float32Array;
     minBounds: [number, number, number];
     maxBounds: [number, number, number];
@@ -117,7 +119,8 @@ export const MeshData: Record<MeshType, MeshData> = {
             0, 2, 3
         ]),
         color: [
-            1.0, 0.0, 0.0],
+            1.0, 0.0, 0.0
+        ],
         minBounds: [
             -0.5, -0.5, 0.0
         ],
@@ -128,14 +131,20 @@ export const MeshData: Record<MeshType, MeshData> = {
     // Quad
     [MeshType.QUAD]: {
         vertices: new Float32Array([
-            -1.0, -1.0, 0.0,
-            1.0, -1.0, 0.0,
-            1.0, 1.0, 0.0,
-            -1.0, 1.0, 0.0
+            -0.5, -0.5, 0.0,
+            0.5, -0.5, 0.0,
+            0.5,  0.5, 0.0,
+            -0.5,  0.5, 0.0
         ]),
         indices: new Uint16Array([
             0, 1, 2,
             0, 2, 3
+        ]),
+        texCoords: new Float32Array([
+            0.0, 1.0,
+            1.0, 1.0,
+            1.0, 0.0,
+            0.0, 0.0
         ]),
         minBounds: [
             -1.0, -1.0, 0.0
@@ -344,6 +353,8 @@ function createMesh(data: MeshData): Buffer {
     const indexBuffer = index.gl.createBuffer();
     if(!indexBuffer) throw new Error('Failed to create index buffer');
 
+    const texCoordBuffer = setupAttribute('aTexCoord', 2, data.texCoords);
+
     index.gl.bindBuffer(index.gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
     index.gl.bufferData(index.gl.ELEMENT_ARRAY_BUFFER, data.indices, index.gl.DYNAMIC_DRAW);
 
@@ -362,7 +373,8 @@ function createMesh(data: MeshData): Buffer {
         data: {
             ...data,
             vertices: new Float32Array(data.vertices),
-            indices: new Uint16Array(data.indices)
+            indices: new Uint16Array(data.indices),
+            texCoords: data.texCoords ? new Float32Array(data.texCoords) : undefined
         },
         modelMatrix: mat4.create(),
         rotation: vec3.create(),
@@ -407,9 +419,61 @@ export function renderMesh(mesh: Buffer): void {
 }
 
 export function renderAllMeshes(): void {
-    for(const mesh of getAllMeshes()) {
+    for(const [id, mesh] of meshCache.entries()) {
+        if(hudIds.has(id)) continue;
         renderMesh(mesh);
     }
+}
+
+export function renderHud(id: string, textureName: string, inverted: boolean = false, pixelSize: [number, number]): void {
+    hudIds.add(id);
+
+    if(!index.shaderProgram) return;
+
+    const scaleX = pixelSize[0] / index.canvas.width;
+    const scaleY = pixelSize[1] / index.canvas.height;
+
+    addMesh(id, MeshType.QUAD, vec3.fromValues(0, 0, 0));
+
+    const isHudLoc = index.gl.getUniformLocation(index.shaderProgram, 'uIsHud');
+    const useTexLoc = index.gl.getUniformLocation(index.shaderProgram, 'uUseTexture'); // missing
+    const texLoc = index.gl.getUniformLocation(index.shaderProgram, 'uTexture');
+    const hudScaleLoc = index.gl.getUniformLocation(index.shaderProgram, 'uHudScale');
+    const isInvertedLoc = index.gl.getUniformLocation(index.shaderProgram, 'uIsInverted');
+    const screenTexLoc = index.gl.getUniformLocation(index.shaderProgram, 'uScreenTexture');
+    const canvasSizeLoc = index.gl.getUniformLocation(index.shaderProgram, 'uCanvasSize');
+
+    index.gl.uniform1i(isHudLoc, 1);
+    index.gl.uniform1i(useTexLoc, 1);
+    index.gl.uniform1i(texLoc, 0);
+    index.gl.uniform2f(hudScaleLoc, scaleX, scaleY);
+    index.gl.uniform1i(isInvertedLoc, inverted ? 1 : 0);
+
+    loadTexture(textureName);
+
+    if(inverted) {
+        const screenTex = getScreenTexture();
+        if(screenTex) {
+            index.gl.bindFramebuffer(index.gl.FRAMEBUFFER, null);
+
+            index.gl.activeTexture(index.gl.TEXTURE1);
+            index.gl.bindTexture(index.gl.TEXTURE_2D, screenTex);
+            index.gl.uniform1i(screenTexLoc, 1);
+        }
+
+        index.gl.uniform2f(canvasSizeLoc, index.canvas.width, index.canvas.height);
+    }
+
+    const mesh = getMesh(id);
+    if(mesh) renderMesh(mesh);
+
+    index.gl.uniform1i(isHudLoc, 0);
+    index.gl.uniform1i(useTexLoc, 0);
+
+    index.gl.activeTexture(index.gl.TEXTURE0);
+    index.gl.bindTexture(index.gl.TEXTURE_2D, null);
+    index.gl.activeTexture(index.gl.TEXTURE1);
+    index.gl.bindTexture(index.gl.TEXTURE_2D, null);
 }
 
 // Add Mesh
@@ -613,6 +677,58 @@ export function hexToRgb(hex: string): [number, number, number] {
 
 /**
  * 
+ * Texture
+ * 
+ */
+const TEXTURE_PATH = './resource/texture';
+const textureCache: Map<string, { texture: WebGLTexture, unit: number }> = new Map();
+let textureUnit: number = 0;
+
+// Load Texture
+export function loadTexture(textureName: string): WebGLTexture {
+    if(!textureCache.has(textureName)) {
+        const unit = textureUnit++;
+
+        const texture = index.gl.createTexture();
+        if(!texture) throw new Error(`Failed to create texture for ${textureName}`);
+    
+        index.gl.activeTexture(index.gl.TEXTURE0 + unit);
+        index.gl.bindTexture(index.gl.TEXTURE_2D, texture);
+        index.gl.texImage2D(
+            index.gl.TEXTURE_2D, 0, index.gl.RGBA, 1, 1, 0,
+            index.gl.RGBA, index.gl.UNSIGNED_BYTE,
+            new Uint8Array([0, 0, 0, 255])
+        );
+
+        const image = new Image();
+        image.src = `${TEXTURE_PATH}/${textureName}`;
+        image.onload = () => {
+            index.gl.activeTexture(index.gl.TEXTURE0 + unit);
+            index.gl.bindTexture(index.gl.TEXTURE_2D, texture);
+            index.gl.texImage2D(
+                index.gl.TEXTURE_2D, 0, index.gl.RGBA,
+                index.gl.RGBA, index.gl.UNSIGNED_BYTE, image
+            );
+            index.gl.generateMipmap(index.gl.TEXTURE_2D);
+            index.gl.texParameteri(index.gl.TEXTURE_2D, index.gl.TEXTURE_WRAP_S, index.gl.REPEAT);
+            index.gl.texParameteri(index.gl.TEXTURE_2D, index.gl.TEXTURE_WRAP_T, index.gl.REPEAT);
+            index.gl.texParameteri(index.gl.TEXTURE_2D, index.gl.TEXTURE_MIN_FILTER, index.gl.NEAREST);
+            index.gl.texParameteri(index.gl.TEXTURE_2D, index.gl.TEXTURE_MAG_FILTER, index.gl.NEAREST);
+        };
+        image.onerror = () => { throw new Error(`Failed to load texture: ${textureName}`); };
+    
+        textureCache.set(textureName, { texture, unit });
+    }
+
+    const { texture, unit } = textureCache.get(textureName)!;
+    index.gl.activeTexture(index.gl.TEXTURE0 + unit);
+    index.gl.bindTexture(index.gl.TEXTURE_2D, texture);
+
+    return texture;
+}
+
+/**
+ * 
  * Collision
  * 
  */
@@ -638,4 +754,55 @@ function applyCollision(position: vec3): void {
 // Update Collision
 export function updateCollision(position: vec3): void {
     applyCollision(position);
+}
+
+/**
+ * 
+ * Screen Texture
+ * 
+ */
+let screenTexture: WebGLTexture | null = null;
+let screenFramebuffer: WebGLFramebuffer | null = null;
+
+// Create Screen Texture
+export function createScreenTexture(): void {
+    index.gl.bindFramebuffer(index.gl.FRAMEBUFFER, null);
+    index.gl.activeTexture(index.gl.TEXTURE0);
+    index.gl.bindTexture(index.gl.TEXTURE_2D, null);
+    
+    screenFramebuffer = index.gl.createFramebuffer();
+    index.gl.bindFramebuffer(index.gl.FRAMEBUFFER, screenFramebuffer);
+
+    screenTexture = index.gl.createTexture();
+    index.gl.bindTexture(index.gl.TEXTURE_2D, screenTexture);
+
+    index.gl.texImage2D(index.gl.TEXTURE_2D, 0, index.gl.RGBA, index.canvas.width, index.canvas.height, 0, index.gl.RGBA, index.gl.UNSIGNED_BYTE, null);
+    index.gl.texParameteri(index.gl.TEXTURE_2D, index.gl.TEXTURE_MIN_FILTER, index.gl.LINEAR);
+    index.gl.texParameteri(index.gl.TEXTURE_2D, index.gl.TEXTURE_MAG_FILTER, index.gl.LINEAR);
+    index.gl.texParameteri(index.gl.TEXTURE_2D, index.gl.TEXTURE_WRAP_S, index.gl.CLAMP_TO_EDGE);
+    index.gl.texParameteri(index.gl.TEXTURE_2D, index.gl.TEXTURE_WRAP_T, index.gl.CLAMP_TO_EDGE);
+
+    index.gl.framebufferTexture2D(index.gl.FRAMEBUFFER, index.gl.COLOR_ATTACHMENT0, index.gl.TEXTURE_2D, screenTexture, 0);
+
+    const status = index.gl.checkFramebufferStatus(index.gl.FRAMEBUFFER);
+    if(status !== index.gl.FRAMEBUFFER_COMPLETE) {
+        console.error('Framebuffer is not complete:', status);
+    } else {
+        console.log('Framebuffer is complete');
+    }
+
+    index.gl.bindFramebuffer(index.gl.FRAMEBUFFER, null);
+    index.gl.bindTexture(index.gl.TEXTURE_2D, null);
+}
+
+// Get Screen Texture
+export function getScreenTexture(): WebGLTexture | null {
+    const val = screenTexture;
+    return val;
+}
+
+// Get Screen Framebuffer
+export function getScreenFramebuffer(): WebGLFramebuffer | null {
+    const val = screenFramebuffer;
+    return val;
 }
