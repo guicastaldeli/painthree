@@ -39,11 +39,13 @@ const SKYBOX_POS_X = 0.0;
 const SKYBOX_POS_Y = 0.0;
 const SKYBOX_POS_Z = 0.0;
 
-const SKYBOX_SCALE_X = 10.0;
-const SKYBOX_SCALE_Y = 10.0;
-const SKYBOX_SCALE_Z = 10.0;
+const SKYBOX_SCALE_X = 300.0;
+const SKYBOX_SCALE_Y = 300.0;
+const SKYBOX_SCALE_Z = 300.0;
 
-const SKYBOX_COLOR = 1.0;
+const SKYBOX_COLOR_BASE = 1.0;
+const SKYBOX_COLOR_TOP = 1.0;
+const SKYBOX_COLOR_BOTTOM = 0.7;
 
 // Set Skybox
 function setSkybox(): void {
@@ -51,15 +53,15 @@ function setSkybox(): void {
 
     data.addMesh(id, data.MeshType.SPHERE, 
         vec3.fromValues(SKYBOX_POS_X, SKYBOX_POS_Y, SKYBOX_POS_Z), 
-        vec3.fromValues(SKYBOX_COLOR, SKYBOX_COLOR, SKYBOX_COLOR));
+        vec3.fromValues(SKYBOX_COLOR_BASE, SKYBOX_COLOR_BASE, SKYBOX_COLOR_BASE));
     data.setMeshScale(id, 
         SKYBOX_SCALE_X, 
         SKYBOX_SCALE_Y, 
         SKYBOX_SCALE_Z
     );
     data.setMeshGradient(id, true, 
-        vec3.fromValues(1.0, 1.0, 1.0),
-        vec3.fromValues(0.5, 0.5, 0.5)
+        vec3.fromValues(SKYBOX_COLOR_TOP, SKYBOX_COLOR_TOP, SKYBOX_COLOR_TOP),
+        vec3.fromValues(SKYBOX_COLOR_BOTTOM, SKYBOX_COLOR_BOTTOM, SKYBOX_COLOR_BOTTOM)
     );
     data.setMeshUnlit(id, true);
 }
@@ -97,10 +99,12 @@ export function renderScene(): void {
     setSkybox();
     
     angle += 0.01;
-    data.addMesh('cube', data.MeshType.CUBE, vec3.fromValues(0.8, 0.5, 0), vec3.fromValues(0.2, 0.8, 1.0));
+    /*data.addMesh('cube', data.MeshType.CUBE, vec3.fromValues(0.8, 0.5, 0), vec3.fromValues(0.2, 0.8, 1.0));
     data.setMeshRotation('cube', 0, angle, 0);
-
+    */
     data.renderAllMeshes();
+
+    data.updateCollision(data.getCameraPosition());
 
     const ray = raycast.getRay();
     for(const mesh of data.getAllMeshes()) {

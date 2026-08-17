@@ -158,11 +158,72 @@ function updateColor(content: HTMLElement): void {
         data.SetValue('activeColor', `rgb(${rgb.map(c => Math.round(c * 255)).join(',')})`);
     });
 }
-
 /**
  * 
  */
 
+/**
+ * 
+ * Scale
+ * 
+ */
+export const category_ToolScale = 'Scale' as const;
+
+const ScaleRenderer = (tool: Tool, _index: number, _arr: Tool[]) => {
+    const t = tool as tool_ToolScale;
+    return `
+        <div class="tool-scale-container">
+            <label class="tool-scale-label">
+                Scale: <span class="tool-scale-value" watch-data="scaleValue" watch-prop="textContent">${t.value}</span>
+            </label>
+            <input type="range" 
+                class="tool-scale-slider" 
+                min="1" max="100" 
+                value="${t.value}"
+                data-tool="${tool.id}"
+                watch-data="scaleValue"
+                watch-prop="value"
+                step="1"
+            />
+        </div>
+    `;
+};
+
+export interface tool_ToolScale extends Tool {
+    category: typeof category_ToolScale;
+    value: number;
+}
+
+export const ToolScale: tool_ToolScale[] = [
+    {
+        id: 'scale',
+        label: 'Scale',
+        icon: './resource/icon/scale.jpg',
+        category: category_ToolScale,
+        value: 50
+    }
+];
+
+export function isToolScale(tool: Tool | null): tool is tool_ToolScale {
+    const val = tool !== null && tool?.category === category_ToolScale;
+    return val;
+}
+
+function updateScale(content: HTMLElement): void {
+    content.addEventListener('input', (e) => {
+        const slider = (e.target as HTMLElement).closest('.tool-scale-slider') as HTMLInputElement;
+        if(!slider) return;
+
+        const value = parseInt(slider.value);
+        data.setScale(value);
+
+        const valueDisplay = slider.parentElement?.querySelector('.tool-scale-value');
+        if(valueDisplay) valueDisplay.textContent = `${value}`;
+    });
+}
+/**
+ * 
+ */
 
 export interface Tool {
     id: string;
@@ -176,7 +237,8 @@ export const Tools = {
         return [
             ...ToolAddMesh,
             ...ToolEraser,
-            ...ToolPalette._
+            ...ToolPalette._,
+            ...ToolScale
         ]
     }
 }
@@ -208,6 +270,7 @@ function applyState(el: HTMLElement, value: any): void {
     
     if(prop === 'value') (el as HTMLInputElement).value = value as string;
     else if(prop === 'selected') el.classList.toggle('selected', value === el.getAttribute('data-tool'));
+    else if(prop === 'textContent') el.textContent = value;
     else (el.style as any)[prop] = value;
 }
 
@@ -226,6 +289,7 @@ function updateData(content: HTMLElement): void {
     });
 
     updateColor(content);
+    updateScale(content);
 }
 
 /**
@@ -248,7 +312,8 @@ const elToolMenu = 'el_tool_menu';
     const ToolRenderers: Map<string, (tool: Tool, index: number, arr: Tool[]) => string> = new Map([
         [category_ToolAddMesh, DefaultRenderer],
         [category_ToolEraser, DefaultRenderer],
-        [category_ToolPalette, (tool, index, arr) => ToolPaletteRenderer(tool, index === arr.length - 1)]
+        [category_ToolPalette, (tool, index, arr) => ToolPaletteRenderer(tool, index === arr.length - 1)],
+        [category_ToolScale, ScaleRenderer]
     ]);
 
     function RenderTool(tool: Tool, index: number, arr: Tool[]): string {
@@ -296,6 +361,9 @@ function onOpened(): void {
         if(tool) {
             if(isToolPalette(tool)) {
                 activePalette(tool);
+                return;
+            }
+            if(isToolScale(tool)) {
                 return;
             }
             setActiveTool(tool);

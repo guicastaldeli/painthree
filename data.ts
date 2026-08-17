@@ -772,7 +772,7 @@ export function setCamera(position: [number, number, number] = [0, 0, 0]): Camer
     const yaw = -90;
     const pitch = 0;
     const near = 0.1;
-    const far = 100.0;
+    const far = 1000.0;
     const front = vec3.fromValues(0, 0, -1);
     const up = vec3.fromValues(0, 1, 0);
     const worldUp = vec3.fromValues(0, 1, 0);
@@ -846,14 +846,16 @@ export function updateCamera(): void {
  * Palette
  * 
  */
-let activeColor: [number, number, number] = [0.0, 0.0, 0.0];
+const DEFAULT_COLOR = 0.1;
+
+let activeColor: [number, number, number] = [DEFAULT_COLOR, DEFAULT_COLOR, DEFAULT_COLOR];
 let newColor: [number, number, number] = [0.5, 0.5, 0.5];
 
 export const Palette = {
     get _(): [number, number, number][] {
         return [
             activeColor, // Active Color
-            [0.0, 0.0, 0.0], // Black (default)
+            [DEFAULT_COLOR, DEFAULT_COLOR, DEFAULT_COLOR], // Black (default)
             [1.0, 1.0, 1.0], // White
             [1.0, 0.0, 0.0], // Red
             [0.0, 1.0, 0.0], // Green
@@ -902,6 +904,31 @@ export function hexToRgb(hex: string): [number, number, number] {
         parseInt(result[2], 16) / 255,
         parseInt(result[3], 16) / 255
     ];
+}
+
+/**
+ * 
+ * Scale
+ * 
+ */
+let currentScale: number = 50;
+
+// Get Scale
+export function getScale(): number {
+    const val = currentScale;
+    return val;
+}
+
+// Set Scale
+export function setScale(value: number): void {
+    currentScale = Math.max(1, Math.min(100, value));
+    SetValue('scaleValue', currentScale);
+}
+
+// Get Scale Multiplier
+export function getScaleMultiplier(): number {
+    const val = currentScale / 100;
+    return val;
 }
 
 /**
@@ -967,7 +994,7 @@ export function loadTexture(textureName: string, filter: 'nearest' | 'linear' = 
  * Collision
  * 
  */
-const COLL_SIZE = 10;
+const COLL_SIZE = 200;
 let boundary: number = COLL_SIZE;
 
 // Get Collision

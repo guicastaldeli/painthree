@@ -161,7 +161,12 @@ function onPlace(): void {
     const activeColor = data.getActiveColor();
     const colorVec = vec3.fromValues(activeColor[0], activeColor[1], activeColor[2]);
 
+    const scaleMultiplier = data.getScaleMultiplier();
+    const scaleValue = Math.max(0.01, scaleMultiplier);
+
     data.addMesh(id, tool.type, point, colorVec);
+    const scale = vec3.fromValues(scaleValue, scaleValue, scaleValue);
+    data.setMeshScale(id, scale[0], scale[1], scale[2]);
 }
 
 // On Select

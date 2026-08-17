@@ -86,3 +86,67 @@ body {
     width: 20px;
     height: 20px;
 }
+
+/* In your CSS file */
+.tool-scale-container {
+    padding: 8px 12px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.tool-scale-label {
+    font-size: 12px;
+    color: #aaa;
+    display: flex;
+    justify-content: space-between;
+}
+
+.tool-scale-value {
+    color: #fff;
+    font-weight: bold;
+}
+
+.tool-scale-slider {
+    width: 50%;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #333;
+    border-radius: 2px;
+    outline: none;
+    transition: background 0.2s;
+}
+
+.tool-scale-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #4a9eff;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.tool-scale-slider::-webkit-slider-thumb:hover {
+    background: #6ab0ff;
+}
+
+.tool-scale-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #4a9eff;
+    cursor: pointer;
+    border: none;
+}
+
+.tool-scale-slider:focus {
+    outline: none;
+}
+
+.tool-scale-slider:focus::-webkit-slider-thumb {
+    box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.3);
+}
