@@ -3,6 +3,33 @@ import { mat4, vec3 } from "gl-matrix";
 
 /**
  * 
+ * Watcher
+ * 
+ */
+const State: Record<string, any> = {};
+const StateWatchers: Set<(key: string, value: any) => void> = new Set();
+
+// Set
+export function SetValue(key: string, value: any): any {
+    State[key] = value;
+    for(const watcher of StateWatchers) watcher(key, value);
+    return value;
+}
+
+// Get
+export function GetValue(key: string): any {
+    const val = State[key];
+    return val;
+}
+
+// Watch
+export function Watch(fn: (key: string, value: any) => void): () => void {
+    StateWatchers.add(fn);
+    return () => StateWatchers.delete(fn);
+}
+
+/**
+ * 
  * Buffers
  * 
  */
@@ -557,7 +584,6 @@ export function getActiveColor(): [number, number, number] {
 // Set Active Color
 export function setActiveColor(color: [number, number, number]): void {
     activeColor = color;
-    document.dispatchEvent(new CustomEvent('active-color-updated', { detail: { color }}));
 }
 
 // Set New Color

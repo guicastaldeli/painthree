@@ -76,10 +76,25 @@ export function isToolEraser(tool: Tool | null): tool is tool_ToolEraser {
  */
 export const category_ToolPalette = 'Palette' as const;
 
-const PaletteRenderer = (tool: tool_ToolPalette, rgb: string, hex: string, showColorPicker: boolean) => 
-    `<button class="tool-btn palette-btn" data-tool="${tool.id}" style="background-color: rgb(${rgb})"></button>
-        ${showColorPicker ? `<input type="color" class="color-picker" value="${hex}" data-tool="${tool.id}" onclick="event.stopPropagation()">` : '' }
-        `;
+const PaletteRenderer = (
+    tool: tool_ToolPalette, 
+    watchKey: string,
+    rgb: string, 
+    hex: string, 
+    showColorPicker: boolean
+) => 
+    `<button class="tool-btn palette-btn" 
+        data-tool="${tool.id}"
+        ${watchKey ? `watch-data="${watchKey}" watch-prop="backgroundColor"` : ''}
+        style="background-color: ${rgb}">
+    </button>
+    ${showColorPicker ? `<input type="color" 
+        class="color-picker" 
+        value="${hex}" 
+        data-tool="${tool.id}"
+        watch-data="newColor"
+        watch-prop="value">` : ''}
+    `
 
 export interface tool_ToolPalette extends Tool {
     color: [number, number, number];
@@ -103,30 +118,28 @@ export function isToolPalette(tool: Tool | null): tool is tool_ToolPalette {
 }
 
 function activePalette(tool: Tool): void {
-    const paletteTool = tool as tool_ToolPalette;
-    data.setActiveColor(paletteTool.color);
+    const rgb = `rgb(${(tool as tool_ToolPalette).color.map(c => Math.round(c * 255)).join(',')})`;
     
-    console.log(`Color selected: ${paletteTool.color}`);
+    data.SetValue('activeColor', rgb);
+    data.setActiveColor((tool as tool_ToolPalette).color);
+    
+    return;
 }
 
 function ToolPaletteRenderer(tool: Tool, isLast: boolean): string {
     const t = tool as tool_ToolPalette;
-    const v = 255;
-    const rgb = t.color.map(c => Math.round(c * v)).join(',');
+    const watchKey = t.id === 'palette_0' ? 'activeColor' : 
+                t.id === `palette_${data.Palette._.length - 1}` ? 
+                'newColor' : '';
+
+    const rgb =  `rgb(${t.color.map(c => Math.round(c * 255)).join(',')})`;
+    const hex = data.rgbToHex(t.color);
     
-    const renderer = PaletteRenderer(t, rgb, data.rgbToHex(t.color), isLast);
+    const renderer = PaletteRenderer(t, watchKey, rgb, hex, isLast);
     return renderer;
 }
 
 function updateColor(content: HTMLElement): void {
-    // Active Color
-    document.addEventListener('active-color-updated', (e) => {
-        const { color } = (e as CustomEvent).detail;
-        const btn = content.querySelector('[data-tool="palette_0"]') as HTMLElement;
-        if(btn) btn.style.backgroundColor = `rgb(${color.map((c: number) => Math.round(c * 255)).join(',')})`;
-    });
-
-    // Color Picker
     content.addEventListener('input', (e) => {
         const picker = (e.target as HTMLElement).closest('.color-picker') as HTMLInputElement;
         if(!picker) return;
@@ -134,18 +147,11 @@ function updateColor(content: HTMLElement): void {
         const rgb = data.hexToRgb(picker.value);
         data.setNewColor(rgb);
         data.setActiveColor(rgb);
-
-        picker.dispatchEvent(new CustomEvent('palette-updated', {
-            bubbles: true,
-            detail: { rgb }
-        }));
-    });
-    content.addEventListener('palette-updated', (e) => {
-        const { rgb } = (e as CustomEvent).detail;
-        const btn = content.querySelector('.palette-btn:last-of-type') as HTMLElement;
-        if(btn) btn.style.backgroundColor = `rgb(${rgb.map((c: number) => Math.round(c * 255)).join(',')})`;
+        data.SetValue('newColor', `rgb(${rgb.map(c => Math.round(c * 255)).join(',')})`);
+        data.SetValue('activeColor', `rgb(${rgb.map(c => Math.round(c * 255)).join(',')})`);
     });
 }
+
 /**
  * 
  */
@@ -168,6 +174,7 @@ export const Tools = {
 }
 
 let activeTool: Tool | null = null;
+let UnwatchState: (() => void) | null = null;
 
 // Get Active Tool
 export function getActiveTool(): Tool | null {
@@ -178,12 +185,39 @@ export function getActiveTool(): Tool | null {
 // Set Active Tool
 export function setActiveTool(tool: Tool | null): void {
     activeTool = tool;
+    data.SetValue('activeTool', tool?.id ?? null);
 }
 
 // Find Tool
 export function findTool(id: string): Tool | null {
     const val = Tools.data.find(t => t.id === id) ?? null;
     return val;
+}
+
+// Apply State
+function applyState(el: HTMLElement, value: any): void {
+    const prop = el.getAttribute('watch-prop')!;
+    
+    if(prop === 'value') (el as HTMLInputElement).value = value as string;
+    else if(prop === 'selected') el.classList.toggle('selected', value === el.getAttribute('data-tool'));
+    else (el.style as any)[prop] = value;
+}
+
+// Update Data
+function updateData(content: HTMLElement): void {
+    content.querySelectorAll('[watch-data]').forEach(el => {
+        const key = el.getAttribute('watch-data');
+        const value = data.GetValue(key!);
+        if(value !== undefined) applyState(el as HTMLElement, value);
+    });
+
+    UnwatchState = data.Watch((key, value) => {
+        content.querySelectorAll(`[watch-data="${key}"]`).forEach(el => {
+            applyState(el as HTMLElement, value);
+        });
+    });
+
+    updateColor(content);
 }
 
 /**
@@ -195,7 +229,12 @@ const elToolMenu = 'el_tool_menu';
 
 /* Renderer */
     const DefaultRenderer = (tool: Tool, _index: number, _arr: Tool[]) => 
-        `<button class="tool-btn" data-tool="${tool.id}">${tool.label}</button>`;
+        `<button class="tool-btn" 
+            data-tool="${tool.id}"
+            watch-data="activeTool"
+            watch-prop="selected">
+            ${tool.label}
+        </button>`;
 
     const ToolRenderers: Map<string, (tool: Tool, index: number, arr: Tool[]) => string> = new Map([
         [category_ToolAddMesh, DefaultRenderer],
@@ -235,7 +274,7 @@ function onOpened(): void {
     const content = document.getElementById(`${elToolMenu}--content`);
     if(!content) return;
 
-    updateColor(content);
+    updateData(content);
 
     content.addEventListener('click', (e) => {
         const btn = (e.target as HTMLElement).closest('[data-tool]');
@@ -257,6 +296,7 @@ function onOpened(): void {
 
 // On Closed
 function onClosed(): void {
+    UnwatchState?.();
     index.canvas.requestPointerLock();
 }
 
