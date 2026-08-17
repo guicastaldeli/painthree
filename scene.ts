@@ -112,8 +112,11 @@ export function renderScene(): void {
 
 export function renderHud(): void {
     index.gl.disable(index.gl.DEPTH_TEST);
-    
+    index.gl.enable(index.gl.BLEND);
+    index.gl.blendFunc(index.gl.SRC_ALPHA, index.gl.ONE_MINUS_SRC_ALPHA);
+       
     renderCameraHud();
-    
+       
+    index.gl.disable(index.gl.BLEND);
     index.gl.enable(index.gl.DEPTH_TEST);
 }

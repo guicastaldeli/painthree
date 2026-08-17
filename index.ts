@@ -117,6 +117,7 @@ function resize(): void {
         canvas.height = height;
 
         if(gl) gl.viewport(0, 0, width, height);
+        data.createScreenTexture();
     }
 }
 

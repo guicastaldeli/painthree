@@ -678,7 +678,7 @@ export function renderHud(id: string, textureName: string, inverted: boolean = f
     index.gl.uniform2f(hudScaleLoc, scaleX, scaleY);
     index.gl.uniform1i(isInvertedLoc, inverted ? 1 : 0);
 
-    loadTexture(textureName);
+    loadTexture(textureName, 'linear');
 
     if(inverted) {
         const screenTex = getScreenTexture();
@@ -914,7 +914,7 @@ const textureCache: Map<string, { texture: WebGLTexture, unit: number }> = new M
 let textureUnit: number = 0;
 
 // Load Texture
-export function loadTexture(textureName: string): WebGLTexture {
+export function loadTexture(textureName: string, filter: 'nearest' | 'linear' = 'nearest'): WebGLTexture {
     if(!textureCache.has(textureName)) {
         const unit = textureUnit++;
 
@@ -941,8 +941,14 @@ export function loadTexture(textureName: string): WebGLTexture {
             index.gl.generateMipmap(index.gl.TEXTURE_2D);
             index.gl.texParameteri(index.gl.TEXTURE_2D, index.gl.TEXTURE_WRAP_S, index.gl.REPEAT);
             index.gl.texParameteri(index.gl.TEXTURE_2D, index.gl.TEXTURE_WRAP_T, index.gl.REPEAT);
-            index.gl.texParameteri(index.gl.TEXTURE_2D, index.gl.TEXTURE_MIN_FILTER, index.gl.NEAREST);
-            index.gl.texParameteri(index.gl.TEXTURE_2D, index.gl.TEXTURE_MAG_FILTER, index.gl.NEAREST);
+            
+            if(filter === 'linear') {
+                index.gl.texParameteri(index.gl.TEXTURE_2D, index.gl.TEXTURE_MIN_FILTER, index.gl.LINEAR_MIPMAP_LINEAR);
+                index.gl.texParameteri(index.gl.TEXTURE_2D, index.gl.TEXTURE_MAG_FILTER, index.gl.LINEAR);
+            } else {
+                index.gl.texParameteri(index.gl.TEXTURE_2D, index.gl.TEXTURE_MIN_FILTER, index.gl.NEAREST_MIPMAP_NEAREST);
+                index.gl.texParameteri(index.gl.TEXTURE_2D, index.gl.TEXTURE_MAG_FILTER, index.gl.NEAREST);
+            }
         };
         image.onerror = () => { throw new Error(`Failed to load texture: ${textureName}`); };
     
