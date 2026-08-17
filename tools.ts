@@ -11,6 +11,7 @@ export const category_ToolAddMesh = 'Add Mesh' as const;
 
 export interface tool_ToolAddMesh extends Tool {
     type: data.MeshType;
+    icon: string;
     category: typeof category_ToolAddMesh;
 }
 
@@ -18,20 +19,24 @@ export const ToolAddMesh: tool_ToolAddMesh[] = [
     { 
         id: 'cube',
         label: 'Cube',
+        icon: './resource/icon/test.jpg',
         category: category_ToolAddMesh,
         type: data.MeshType.CUBE
     },
     { 
         id: 'pyramid',
         label: 'Pyramid',
+        icon: './resource/icon/test.jpg',
         category: category_ToolAddMesh,
         type: data.MeshType.PYRAMID
     },
-    /*{ ADD LATER.... 
+    {
         id: 'sphere',
         label: 'Sphere',
+        icon: './resource/icon/test.jpg',
+        category: category_ToolAddMesh,
         type: data.MeshType.SPHERE
-    }*/
+    }
 ]
 
 export function isToolAddMesh(tool: Tool | null): tool is tool_ToolAddMesh {
@@ -51,12 +56,14 @@ export const category_ToolEraser = 'Eraser' as const;
 
 export interface tool_ToolEraser extends Tool {
     category: typeof category_ToolEraser;
+    icon: string;
 }
 
 export const ToolEraser: tool_ToolEraser[] = [
     {
         id: 'eraser',
         label: 'Eraser',
+        icon: './resource/icon/test.jpg',
         category: category_ToolEraser
     }
 ];
@@ -121,7 +128,7 @@ function activePalette(tool: Tool): void {
     const rgb = `rgb(${(tool as tool_ToolPalette).color.map(c => Math.round(c * 255)).join(',')})`;
     
     data.SetValue('activeColor', rgb);
-    //data.setActiveColor((tool as tool_ToolPalette).color);
+    data.setActiveColor((tool as tool_ToolPalette).color);
     
     return;
 }
@@ -161,6 +168,7 @@ export interface Tool {
     id: string;
     label: string;
     category: string;
+    icon?: string;
 }
 
 export const Tools = {
@@ -232,8 +240,9 @@ const elToolMenu = 'el_tool_menu';
         `<button class="tool-btn" 
             data-tool="${tool.id}"
             watch-data="activeTool"
-            watch-prop="selected">
-            ${tool.label}
+            watch-prop="selected"
+        >
+            <img class="tool-icon" id="tool-icon-${tool.id}" src="${tool.icon}"/>
         </button>`;
 
     const ToolRenderers: Map<string, (tool: Tool, index: number, arr: Tool[]) => string> = new Map([

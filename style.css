@@ -81,3 +81,8 @@ body {
 .palette-btn:hover {
     border-color: #aaa;
 }
+
+.tool-btn .tool-icon {
+    width: 20px;
+    height: 20px;
+}

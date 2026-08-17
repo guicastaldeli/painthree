@@ -64,19 +64,37 @@ function setSkybox(): void {
  * Render
  * 
  */
+let lightingInitialized = false;
+
+function setLighting(): void {
+    if(lightingInitialized) return;
+
+    const ambientColor = vec3.fromValues(0.4, 0.4, 0.4);
+    data.setAmbientLight(ambientColor, 1.0);
+
+    const direction = vec3.fromValues(-1.0, -2.0, -1.0);
+    const color = vec3.fromValues(1.0, 1.0, 1.0);
+    vec3.normalize(direction, direction);
+    data.setDirectionalLight(direction, color, 1.2);
+
+    lightingInitialized = true;
+    console.log('Lighting initialized');
+}
+
 let angle = 0;
 
-// In scene.js
 export function renderScene(): void {
     setCamera();
     data.updateCamera();
+
+    setLighting();
     
     setSkybox();
     
     angle += 0.01;
     data.addMesh('cube', data.MeshType.CUBE, vec3.fromValues(0.8, 0.5, 0), vec3.fromValues(0.2, 0.8, 1.0));
     data.setMeshRotation('cube', 0, angle, 0);
-    
+
     data.renderAllMeshes();
 
     const ray = raycast.getRay();

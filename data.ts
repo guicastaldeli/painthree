@@ -72,7 +72,8 @@ export enum MeshType {
     SQUARE,
     QUAD,
     PYRAMID,
-    CUBE
+    CUBE,
+    SPHERE
 }
 
 export interface MeshData {
@@ -153,57 +154,115 @@ export const MeshData: Record<MeshType, MeshData> = {
             1.0, 1.0, 0.0
         ]
     },
-    [MeshType.PYRAMID]: {
-        vertices: new Float32Array([
+    // Pyramid
+    [MeshType.PYRAMID]: (() => {
+        const vertices = new Float32Array([
             -0.5, -0.5, 0.5,
             0.5, -0.5, 0.5,
-            0.0, 0.5, 0.0,
-            
+            0.0,  0.5, 0.0,
+
             0.5, -0.5, 0.5,
             0.5, -0.5, -0.5,
-            0.0, 0.5, 0.0,
-            
+            0.0,  0.5, 0.0,
+
             0.5, -0.5, -0.5,
             -0.5, -0.5, -0.5,
-            0.0, 0.5, 0.0,
-            
+            0.0,  0.5, 0.0,
+
             -0.5, -0.5, -0.5,
             -0.5, -0.5, 0.5,
-            0.0, 0.5, 0.0,
-            
+            0.0,  0.5, 0.0,
+
             -0.5, -0.5, 0.5,
             0.5, -0.5, 0.5,
             0.5, -0.5, -0.5,
             -0.5, -0.5, -0.5
-        ]),
-        indices: new Uint16Array([
+        ]);
+        
+        const indices = new Uint16Array([
             0, 1, 2,
             3, 4, 5,
             6, 7, 8,
             9, 10, 11,
-            12, 13, 14, 12, 14, 15
-        ]),
-        color: [
-            1.0, 0.0, 0.0
-        ],
-        minBounds: [
-            -0.5, -0.5, -0.5
-        ],
-        maxBounds: [
-            0.5, 0.5, 0.5
-        ]
-    },
+            12, 13, 14,
+            12, 14, 15
+        ]);
+        
+        const normals = new Float32Array(vertices.length);
+        for(let i = 0; i < indices.length; i += 3) {
+            const a = indices[i] * 3;
+            const b = indices[i + 1] * 3;
+            const c = indices[i + 2] * 3;
+            
+            const ax = vertices[a], ay = vertices[a + 1], az = vertices[a + 2];
+            const bx = vertices[b], by = vertices[b + 1], bz = vertices[b + 2];
+            const cx = vertices[c], cy = vertices[c + 1], cz = vertices[c + 2];
+            
+            const ex1 = bx - ax, ey1 = by - ay, ez1 = bz - az;
+            const ex2 = cx - ax, ey2 = cy - ay, ez2 = cz - az;
+            
+            let nx = ey1 * ez2 - ez1 * ey2;
+            let ny = ez1 * ex2 - ex1 * ez2;
+            let nz = ex1 * ey2 - ey1 * ex2;
+            
+            const len = Math.sqrt(nx * nx + ny * ny + nz * nz);
+            if(len > 0) {
+                nx /= len;
+                ny /= len;
+                nz /= len;
+            }
+            
+            normals[a] += nx;
+            normals[a + 1] += ny;
+            normals[a + 2] += nz;
+            normals[b] += nx;
+            normals[b + 1] += ny;
+            normals[b + 2] += nz;
+            normals[c] += nx;
+            normals[c + 1] += ny;
+            normals[c + 2] += nz;
+        }
+        
+        for(let i = 0; i < normals.length; i += 3) {
+            const x = normals[i];
+            const y = normals[i + 1];
+            const z = normals[i + 2];
+            const len = Math.sqrt(x * x + y * y + z * z);
+            if(len > 0) {
+                normals[i] = x / len;
+                normals[i + 1] = y / len;
+                normals[i + 2] = z / len;
+            }
+        }
+        
+        return {
+            vertices,
+            normals,
+            indices,
+            color: [1.0, 0.0, 0.0],
+            texCoords: new Float32Array([
+                0.0, 0.0, 1.0, 0.0, 0.5, 1.0,
+                0.0, 0.0, 1.0, 0.0, 0.5, 1.0,
+                0.0, 0.0, 1.0, 0.0, 0.5, 1.0,
+                0.0, 0.0, 1.0, 0.0, 0.5, 1.0,
+                0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0
+            ]),
+            minBounds: [-0.5, -0.5, -0.5],
+            maxBounds: [0.5, 0.5, 0.5]
+        };
+    })(),
+    // Cube
     [MeshType.CUBE]: {
         vertices: new Float32Array([
             -0.5, -0.5, 0.5,
             0.5, -0.5, 0.5,
-            0.5, 0.5, 0.5,
-            -0.5, 0.5, 0.5,
+            0.5,  0.5, 0.5,
+            -0.5,  0.5, 0.5,
 
             -0.5, -0.5, -0.5,
             0.5, -0.5, -0.5,
-            0.5, 0.5, -0.5,
-            -0.5, 0.5, -0.5,
+            0.5,  0.5, -0.5,
+            -0.5,  0.5, -0.5,
 
             -0.5, 0.5, 0.5,
             0.5, 0.5, 0.5,
@@ -217,32 +276,139 @@ export const MeshData: Record<MeshType, MeshData> = {
 
             0.5, -0.5, 0.5,
             0.5, -0.5, -0.5,
-            0.5, 0.5, -0.5,
-            0.5, 0.5, 0.5,
+            0.5,  0.5, -0.5,
+            0.5,  0.5, 0.5,
 
             -0.5, -0.5, 0.5,
             -0.5, -0.5, -0.5,
-            -0.5, 0.5, -0.5,
-            -0.5, 0.5, 0.5 
+            -0.5,  0.5, -0.5,
+            -0.5,  0.5, 0.5
+        ]),
+        normals: new Float32Array([
+            0.0, 0.0, 1.0,
+            0.0, 0.0, 1.0,
+            0.0, 0.0, 1.0,
+            0.0, 0.0, 1.0,
+
+            0.0, 0.0, -1.0,
+            0.0, 0.0, -1.0,
+            0.0, 0.0, -1.0,
+            0.0, 0.0, -1.0,
+
+            0.0, 1.0, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 1.0, 0.0,
+
+            0.0, -1.0, 0.0,
+            0.0, -1.0, 0.0,
+            0.0, -1.0, 0.0,
+            0.0, -1.0, 0.0,
+
+            1.0, 0.0, 0.0,
+            1.0, 0.0, 0.0,
+            1.0, 0.0, 0.0,
+            1.0, 0.0, 0.0,
+
+            -1.0, 0.0, 0.0,
+            -1.0, 0.0, 0.0,
+            -1.0, 0.0, 0.0,
+            -1.0, 0.0, 0.0
         ]),
         indices: new Uint16Array([
-            0, 1, 2, 0, 2, 3,
-            4, 5, 6, 4, 6, 7,
-            8, 9, 10, 8, 10, 11,
-            12, 13, 14, 12, 14, 15,
-            16, 17, 18, 16, 18, 19,
-            20, 21, 22, 20, 22, 23
+            0, 1, 2,
+            0, 2, 3,
+
+            4, 5, 6,
+            4, 6, 7,
+
+            8, 9, 10,
+            8, 10, 11,
+
+            12, 13, 14,
+            12, 14, 15,
+
+            16, 17, 18,
+            16, 18, 19,
+
+            20, 21, 22,
+            20, 22, 23
         ]),
         color: [
             1.0, 0.0, 0.0
         ],
-        minBounds: [
-            -0.5, -0.5, -0.5
+        texCoords: new Float32Array([
+            0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
+            0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
+            0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
+            0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
+            0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
+            0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0
+        ]),
+        minBounds: [ 
+            -0.5, -0.5, -0.5 
         ],
-        maxBounds: [
-            0.5, 0.5, 0.5
+        maxBounds: [ 
+            0.5, 0.5, 0.5 
         ]
-    }
+    },
+    // Sphere
+    [MeshType.SPHERE]: (() => {
+        const radius = 0.5;
+        const segments = 32;
+        const vertices: number[] = [];
+        const normals: number[] = [];
+        const texCoords: number[] = [];
+        const indices: number[] = [];
+
+        for(let i = 0; i <= segments; i++) {
+            const theta = (i / segments) * Math.PI;
+            const sinTheta = Math.sin(theta);
+            const cosTheta = Math.cos(theta);
+
+            for(let j = 0; j <= segments; j++) {
+                const phi = (j / segments) * 2 * Math.PI;
+                const sinPhi = Math.sin(phi);
+                const cosPhi = Math.cos(phi);
+
+                vertices.push(
+                    radius * sinTheta * cosPhi,
+                    radius * cosTheta,
+                    radius * sinTheta * sinPhi
+                );
+
+                normals.push(
+                    sinTheta * cosPhi,
+                    cosTheta,
+                    sinTheta * sinPhi
+                );
+
+                texCoords.push(j / segments, i / segments);
+            }
+        }
+
+        for(let i = 0; i < segments; i++) {
+            for(let j = 0; j < segments; j++) {
+                const a = i * (segments + 1) + j;
+                const b = i * (segments + 1) + j + 1;
+                const c = (i + 1) * (segments + 1) + j;
+                const d = (i + 1) * (segments + 1) + j + 1;
+
+                indices.push(a, b, c);
+                indices.push(b, d, c);
+            }
+        }
+
+        return {
+            vertices: new Float32Array(vertices),
+            normals: new Float32Array(normals),
+            texCoords: new Float32Array(texCoords),
+            indices: new Uint16Array(indices),
+            color: [1.0, 0.0, 0.0],
+            minBounds: [-radius, -radius, -radius],
+            maxBounds: [radius, radius, radius]
+        };
+    })()
 };
 
 // Get Mesh
@@ -349,11 +515,10 @@ function createMesh(data: MeshData): Buffer {
     }
 
     const positionBuffer = setupAttribute('aPos', 3, data.vertices);
+    const normalBuffer = setupAttribute('aNormal', 3, data.normals);
 
     const indexBuffer = index.gl.createBuffer();
     if(!indexBuffer) throw new Error('Failed to create index buffer');
-
-    const texCoordBuffer = setupAttribute('aTexCoord', 2, data.texCoords);
 
     index.gl.bindBuffer(index.gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
     index.gl.bufferData(index.gl.ELEMENT_ARRAY_BUFFER, data.indices, index.gl.DYNAMIC_DRAW);
@@ -368,13 +533,14 @@ function createMesh(data: MeshData): Buffer {
         vao,
         positionBuffer: positionBuffer!,
         indexBuffer,
-        //normalBuffer,
+        normalBuffer,
         indexCount: data.indices.length,
         data: {
             ...data,
             vertices: new Float32Array(data.vertices),
             indices: new Uint16Array(data.indices),
-            texCoords: data.texCoords ? new Float32Array(data.texCoords) : undefined
+            texCoords: data.texCoords ? new Float32Array(data.texCoords) : undefined,
+            normals: data.normals ? new Float32Array(data.normals) : undefined
         },
         modelMatrix: mat4.create(),
         rotation: vec3.create(),
@@ -419,6 +585,8 @@ export function renderMesh(mesh: Buffer): void {
 }
 
 export function renderAllMeshes(): void {
+    updateLightUniform();
+
     for(const [id, mesh] of meshCache.entries()) {
         if(hudIds.has(id)) continue;
         renderMesh(mesh);
@@ -805,4 +973,71 @@ export function getScreenTexture(): WebGLTexture | null {
 export function getScreenFramebuffer(): WebGLFramebuffer | null {
     const val = screenFramebuffer;
     return val;
+}
+
+/**
+ * 
+ * Lighting
+ * 
+ */
+export interface Lighting {
+    ambient: {
+        color: vec3;
+        intensity: number;
+    };
+    directional: {
+        direction: vec3;
+        color: vec3;
+        intensity: number;
+    };
+}
+
+let lightingInstance: Lighting = {
+    ambient: {
+        color: vec3.fromValues(0.2, 0.2, 0.2),
+        intensity: 1.0
+    },
+    directional: {
+        direction: vec3.fromValues(-1.0, -1.0, -1.0),
+        color: vec3.fromValues(1.0, 1.0, 1.0),
+        intensity: 1.0
+    }
+};
+
+// Get Lighting
+export function getLighting(): Lighting {
+    const val = lightingInstance;
+    return val;
+}
+
+// Set Ambient Light
+export function setAmbientLight(color: vec3, intensity: number = 1.0): void {
+    vec3.copy(lightingInstance.ambient.color, color);
+    lightingInstance.ambient.intensity = intensity;
+}
+
+// Set Directional Light
+export function setDirectionalLight(direction: vec3, color: vec3, intensity: number = 1.0): void {
+    vec3.copy(lightingInstance.directional.direction, direction);
+    vec3.copy(lightingInstance.directional.color, color);
+    lightingInstance.directional.intensity = intensity;
+}
+
+// Update Light Uniforms
+export function updateLightUniform(): void {
+    if(!index.shaderProgram) return;
+
+    // Ambient
+    const ambientColorLoc = index.gl.getUniformLocation(index.shaderProgram, 'uLightAmbient');
+    const ambientIntensityLoc = index.gl.getUniformLocation(index.shaderProgram, 'uLightAmbientIntensity');
+    index.gl.uniform3fv(ambientColorLoc, lightingInstance.ambient.color);
+    index.gl.uniform1f(ambientIntensityLoc, lightingInstance.ambient.intensity);
+
+    // Directional
+    const dirLoc = index.gl.getUniformLocation(index.shaderProgram, 'uLightDirection');
+    const dirColorLoc = index.gl.getUniformLocation(index.shaderProgram, 'uLightColor');
+    const dirIntensityLoc = index.gl.getUniformLocation(index.shaderProgram, 'uLightIntensity');
+    index.gl.uniform3fv(dirLoc, lightingInstance.directional.direction);
+    index.gl.uniform3fv(dirColorLoc, lightingInstance.directional.color);
+    index.gl.uniform1f(dirIntensityLoc, lightingInstance.directional.intensity);
 }
