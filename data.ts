@@ -455,7 +455,12 @@ export function removeMesh(id: string): void {
 export function selectMesh(mesh: Buffer | null): void {
     if(selectedMesh) selectedMesh.selected = false;
     selectedMesh = mesh;
-    if(mesh) mesh.selected = true;
+    if(mesh) {
+        mesh.selected = true;
+        SetValue('selectedMeshId', mesh.id);
+    } else {
+        SetValue('selectedMeshId', null);
+    }
 }
 
 export function getSelectedMesh(): Buffer | null {
@@ -846,7 +851,7 @@ export function updateCamera(): void {
  * Palette
  * 
  */
-const DEFAULT_COLOR = 0.1;
+const DEFAULT_COLOR = 0.15;
 
 let activeColor: [number, number, number] = [DEFAULT_COLOR, DEFAULT_COLOR, DEFAULT_COLOR];
 let newColor: [number, number, number] = [0.5, 0.5, 0.5];

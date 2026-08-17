@@ -19,21 +19,21 @@ export const ToolAddMesh: tool_ToolAddMesh[] = [
     { 
         id: 'cube',
         label: 'Cube',
-        icon: './resource/icon/test.jpg',
+        icon: './resource/icon/cube.png',
         category: category_ToolAddMesh,
         type: data.MeshType.CUBE
     },
     { 
         id: 'pyramid',
         label: 'Pyramid',
-        icon: './resource/icon/test.jpg',
+        icon: './resource/icon/pyramid.png',
         category: category_ToolAddMesh,
         type: data.MeshType.PYRAMID
     },
     {
         id: 'sphere',
         label: 'Sphere',
-        icon: './resource/icon/test.jpg',
+        icon: './resource/icon/sphere.png',
         category: category_ToolAddMesh,
         type: data.MeshType.SPHERE
     }
@@ -63,7 +63,7 @@ export const ToolEraser: tool_ToolEraser[] = [
     {
         id: 'eraser',
         label: 'Eraser',
-        icon: './resource/icon/test.jpg',
+        icon: './resource/icon/eraser.png',
         category: category_ToolEraser
     }
 ];
@@ -171,15 +171,24 @@ export const category_ToolScale = 'Scale' as const;
 
 const ScaleRenderer = (tool: Tool, _index: number, _arr: Tool[]) => {
     const t = tool as tool_ToolScale;
+    const currentValue = data.GetValue('scaleValue') !== undefined ? data.GetValue('scaleValue') : t.value;
+    const selectedId = data.GetValue('selectedMeshId');
+    const hasSelectedMesh = selectedId !== null && 
+                           selectedId !== undefined && 
+                           selectedId !== 'null' && 
+                           selectedId !== '' &&
+                           typeof selectedId === 'string';
+    
     return `
-        <div class="tool-scale-container">
-            <label class="tool-scale-label">
-                Scale: <span class="tool-scale-value" watch-data="scaleValue" watch-prop="textContent">${t.value}</span>
-            </label>
+        <div class="tool-scale-container"
+            watch-data="selectedMeshId" 
+            watch-prop="display"
+            style="display: ${hasSelectedMesh ? 'flex' : 'none'}">
+            <div class="tool-scale-tooltip">${currentValue}</div>
             <input type="range" 
                 class="tool-scale-slider" 
                 min="1" max="100" 
-                value="${t.value}"
+                value="${currentValue}"
                 data-tool="${tool.id}"
                 watch-data="scaleValue"
                 watch-prop="value"
@@ -210,6 +219,20 @@ export function isToolScale(tool: Tool | null): tool is tool_ToolScale {
 }
 
 function updateScale(content: HTMLElement): void {
+    function updateTooltipPosition(slider: HTMLInputElement, tooltip: HTMLElement): void {
+        const min = parseInt(slider.min);
+        const max = parseInt(slider.max);
+        const value = parseInt(slider.value);
+
+        const percent = 1 - (value - min) / (max - min);
+        const trackHeight = slider.offsetHeight;
+        const thumbSize = 14;
+
+        const offset = thumbSize / 2 + percent * (trackHeight - thumbSize);
+        tooltip.style.top = `${offset}px`;
+        tooltip.style.transform = 'translateY(-50%)';
+    }
+    
     content.addEventListener('input', (e) => {
         const slider = (e.target as HTMLElement).closest('.tool-scale-slider') as HTMLInputElement;
         if(!slider) return;
@@ -217,10 +240,28 @@ function updateScale(content: HTMLElement): void {
         const value = parseInt(slider.value);
         data.setScale(value);
 
-        const valueDisplay = slider.parentElement?.querySelector('.tool-scale-value');
-        if(valueDisplay) valueDisplay.textContent = `${value}`;
+        const tooltip = slider.parentElement?.querySelector('.tool-scale-tooltip') as HTMLElement;
+        if(tooltip) {
+            tooltip.textContent = `${value}`;
+            updateTooltipPosition(slider, tooltip);
+        }
+    });
+    content.addEventListener('mousedown', (e) => {
+        const slider = (e.target as HTMLElement).closest('.tool-scale-slider') as HTMLInputElement;
+        if(!slider) return;
+        const tooltip = slider.parentElement?.querySelector('.tool-scale-tooltip') as HTMLElement;
+        if(tooltip) {
+            tooltip.style.opacity = '1';
+            updateTooltipPosition(slider, tooltip);
+        }
+    });
+
+    window.addEventListener('mouseup', () => {
+        const tooltip = content.querySelector('.tool-scale-tooltip') as HTMLElement;
+        if(tooltip) tooltip.style.opacity = '0';
     });
 }
+
 /**
  * 
  */
@@ -271,6 +312,10 @@ function applyState(el: HTMLElement, value: any): void {
     if(prop === 'value') (el as HTMLInputElement).value = value as string;
     else if(prop === 'selected') el.classList.toggle('selected', value === el.getAttribute('data-tool'));
     else if(prop === 'textContent') el.textContent = value;
+    else if(prop === 'display') {
+        const hasValue = value !== null && value !== undefined && value !== 'null' && value !== '';
+        el.style.display = hasValue ? 'flex' : 'none';
+    }
     else (el.style as any)[prop] = value;
 }
 
@@ -329,7 +374,11 @@ const elToolMenu = 'el_tool_menu';
             <div class="${elToolMenu}--main">
                 <div id="${elToolMenu}--content">
                     ${buildTool().map(g => `
-                        ${g.tools.map((t, i, arr) => RenderTool(t, i, arr)).join('')}
+                        <section class="tool-section" data-category="${g.category}">
+                            <div class="tool-section-item">
+                                ${g.tools.map((t, i, arr) => RenderTool(t, i, arr)).join('')}
+                            </div>
+                        </section>
                     `).join('')}
                 </div>
             </div>
@@ -359,6 +408,11 @@ function onOpened(): void {
 
         const tool = findTool(id);
         if(tool) {
+            if(activeTool === tool) {
+                setActiveTool(null);
+                data.SetValue('selectedMeshId', null);
+                return;
+            }
             if(isToolPalette(tool)) {
                 activePalette(tool);
                 return;
@@ -366,7 +420,13 @@ function onOpened(): void {
             if(isToolScale(tool)) {
                 return;
             }
+
             setActiveTool(tool);
+            if(isToolAddMesh(tool)) {
+                data.SetValue('selectedMeshId', tool.id);
+            } else {
+                data.SetValue('selectedMeshId', null);
+            }
         }
     });
 }

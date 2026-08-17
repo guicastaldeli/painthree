@@ -56,9 +56,25 @@ body {
     width: 100%;
     height: 100%;
 
-    background-color: black;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    background-color: #fff;
+
+    gap: 0.5rem !important;
 }
 
+.tool-section {
+    padding: 0.2em;
+    padding-left: 0.8rem;
+}
+
+/*
+*
+* Palette
+*
+*/
 #el_tool_menu--palette {
     display: flex;
     flex-wrap: wrap;
@@ -66,57 +82,192 @@ body {
     padding: 4px;
 }
 
-.tool-btn.selected {
-    background-color: black;
-    color: white;
-}
-
 .palette-btn {
-    width: 24px;
-    height: 24px;
-    border: 2px solid #fff;
-    cursor: pointer;
-}
-
-.palette-btn:hover {
-    border-color: #aaa;
-}
-
-.tool-btn .tool-icon {
     width: 20px;
     height: 20px;
 }
 
-/* In your CSS file */
+.tool-section[data-category="Palette"] {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.tool-section[data-category="Palette"] .tool-section-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tool-section[data-category="Palette"] .tool-btn.selected {
+    background-color: #4a9eff1a;
+    border: 0.05rem #4a9eff solid;
+}
+
+.tool-section[data-category="Palette"] .tool-section-item {
+    display: flex;
+    gap: 0.1rem;
+}
+
+.tool-section[data-category="Palette"] .tool-btn {
+    border: 0.1rem #575757 solid;
+    border-radius: 1.0rem;
+
+    background-color: transparent;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    overflow: hidden;
+
+    margin-right: 2px;
+}
+
+.tool-section[data-category="Palette"] .palette-btn[data-tool="palette_0"] {
+    width: 28px;
+    height: 28px;
+    border-radius: 1.5rem;
+    margin-right: 10px;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+.tool-section[data-category="Palette"] .color-picker {
+    width: 30px;
+    height: 30px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    padding: 0;
+    background: transparent;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.tool-section[data-category="Palette"] .color-picker::-webkit-color-swatch-wrapper {
+    padding: 2px;
+}
+
+.tool-section[data-category="Palette"] .color-picker::-webkit-color-swatch {
+    border: none;
+}
+
+/*
+*
+* Mesh
+*
+*/
+.tool-section[data-category="Add Mesh"] .tool-btn.selected {
+    background: linear-gradient(to top, #4a9eff3d, #76b4fb09);
+    border: 0.05rem #4a9eff solid;
+}
+
+.tool-section[data-category="Add Mesh"] .tool-section-item {
+    display: flex;
+    gap: 0.1rem;
+}
+
+.tool-section[data-category="Add Mesh"] .tool-btn {
+    border: 0.05rem #aaa solid;
+    border-radius: 0.2rem;
+
+    background-color: transparent;
+    
+    width: 36px;
+    height: 35px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    overflow: hidden;
+}
+
+.tool-section[data-category="Add Mesh"] .tool-btn .tool-icon {
+    width: 80%;
+    height: 80%;
+
+    object-fit: cover;
+    display: block;
+}
+
+/*
+*
+* Eraser
+*
+*/
+.tool-section[data-category="Eraser"] .tool-btn.selected {
+    background: linear-gradient(to top, #cd0d4a3d, #cd0d4a1a);
+    border: 0.05rem #cd0d4a3d solid;
+}
+
+.tool-section[data-category="Eraser"] .tool-section-item {
+    display: flex;
+    gap: 0.1rem;
+}
+
+.tool-section[data-category="Eraser"] .tool-btn {
+    border: 0.05rem #aaa solid;
+    border-radius: 0.1rem;
+
+    background-color: transparent;
+    
+    width: 36px;
+    height: 35px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    overflow: hidden;
+}
+
+.tool-section[data-category="Eraser"] .tool-btn .tool-icon {
+    width: 80%;
+    height: 80%;
+
+    object-fit: cover;
+    display: block;
+}
+
+/*
+*
+* Scale
+*
+*/
+.tool-section[data-category="Scale"] {
+    position: fixed;
+    left: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: #e8e8e8;
+    border-radius: 0.2rem;
+    padding: 0;
+    height: 36%;
+    z-index: 10;
+}
+
 .tool-scale-container {
+    position: relative;
     padding: 8px 12px;
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 4px;
-}
-
-.tool-scale-label {
-    font-size: 12px;
-    color: #aaa;
-    display: flex;
-    justify-content: space-between;
-}
-
-.tool-scale-value {
-    color: #fff;
-    font-weight: bold;
+    align-items: center;
+    gap: 8px;
 }
 
 .tool-scale-slider {
-    width: 50%;
-    height: 4px;
-    -webkit-appearance: none;
+    width: 5px;
+    height: calc(36% - 16px);
+    -webkit-appearance: slider-vertical;
     appearance: none;
-    background: #333;
-    border-radius: 2px;
+    writing-mode: vertical-lr;
+    direction: rtl;
+    background: #858585;
+    border-radius: 99px;
     outline: none;
-    transition: background 0.2s;
+    cursor: pointer;
 }
 
 .tool-scale-slider::-webkit-slider-thumb {
@@ -130,17 +281,29 @@ body {
     transition: background 0.2s;
 }
 
+.tool-scale-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #0078d4;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
 .tool-scale-slider::-webkit-slider-thumb:hover {
-    background: #6ab0ff;
+    background: #106ebe;
 }
 
 .tool-scale-slider::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
-    background: #4a9eff;
+    background: #0078d4;
     cursor: pointer;
-    border: none;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px #0078d4;
 }
 
 .tool-scale-slider:focus {
@@ -148,5 +311,24 @@ body {
 }
 
 .tool-scale-slider:focus::-webkit-slider-thumb {
-    box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.3);
+    box-shadow: 0 0 0 1px #0078d4, 0 0 0 3px rgba(0, 120, 212, 0.3);
+}
+
+.tool-scale-tooltip {
+    position: absolute;
+    left: 130%;
+    transform: translateY(-50%);
+    background: #f4f4f4;
+    color: #1d1d1d;
+    font-size: 11px;
+    padding: 3px 7px;
+    border: 0.01rem #8a8a8a solid;
+    border-radius: 2px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.1s;
+    white-space: nowrap;
+    box-shadow: 1px 1px 8px #00000046;
+
+    font-family: 'Segoe UI Variable', 'Segoe UI', sans-serif;
 }
