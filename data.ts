@@ -50,6 +50,12 @@ export interface Buffer {
     positionBuffer: WebGLBuffer;
     indexBuffer: WebGLBuffer;
     normalBuffer?: WebGLBuffer;
+    texCoordBuffer?: WebGLBuffer;
+
+    unlit: boolean;
+    gradient: boolean;
+    gradientTop?: vec3;
+    gradientBottom?: vec3;
 }
 
 interface AttributeConfig {
@@ -64,8 +70,9 @@ interface AttributeConfig {
  * 
  */
 const meshCache: Map<string, Buffer> = new Map();
-const hudIds: Set<string> = new Set();
 let selectedMesh: Buffer | null = null;
+
+const hudIds: Set<string> = new Set();
 
 export enum MeshType {
     TRIANGLE,
@@ -490,6 +497,42 @@ export function setMeshColor(id: string, color: vec3): void {
     vec3.copy(mesh.color, color);
 }
 
+// Set Mesh Unlit
+export function setMeshUnlit(id: string, unlit: boolean): void {
+    const mesh = getMesh(id);
+    if(!mesh) return;
+    mesh.unlit = unlit;
+}
+
+function setUnlit(unlit: boolean): void {
+    if(!index.shaderProgram) return;
+
+    const loc = index.gl.getUniformLocation(index.shaderProgram, 'uUnlit');
+    index.gl.uniform1i(loc, unlit ? 1 : 0);
+}
+
+// Set Gradient
+export function setMeshGradient(id: string, enabled: boolean, top?: vec3, bottom?: vec3): void {
+    const mesh = getMesh(id);
+    if(!mesh) return;
+
+    mesh.gradient = enabled;
+    if(top) mesh.gradientTop = vec3.clone(top);
+    if(bottom) mesh.gradientBottom = vec3.clone(bottom);
+}
+
+export function setGradient(enabled: boolean, top?: vec3, bottom?: vec3): void {
+    if(!index.shaderProgram) return;
+
+    const gradLoc = index.gl.getUniformLocation(index.shaderProgram!, 'uGradient');
+    const topLoc = index.gl.getUniformLocation(index.shaderProgram!, 'uGradientTop');
+    const botLoc = index.gl.getUniformLocation(index.shaderProgram!, 'uGradientBottom');
+
+    index.gl.uniform1i(gradLoc, enabled ? 1 : 0);
+    if(top) index.gl.uniform3fv(topLoc, top);
+    if(bottom) index.gl.uniform3fv(botLoc, bottom);
+}
+
 // Create Mesh
 function createMesh(data: MeshData): Buffer {
     const vao = index.gl.createVertexArray();
@@ -516,6 +559,7 @@ function createMesh(data: MeshData): Buffer {
 
     const positionBuffer = setupAttribute('aPos', 3, data.vertices);
     const normalBuffer = setupAttribute('aNormal', 3, data.normals);
+    const texCoordBuffer = setupAttribute('aTexCoord', 2, data.texCoords);
 
     const indexBuffer = index.gl.createBuffer();
     if(!indexBuffer) throw new Error('Failed to create index buffer');
@@ -534,6 +578,7 @@ function createMesh(data: MeshData): Buffer {
         positionBuffer: positionBuffer!,
         indexBuffer,
         normalBuffer,
+        texCoordBuffer,
         indexCount: data.indices.length,
         data: {
             ...data,
@@ -546,7 +591,11 @@ function createMesh(data: MeshData): Buffer {
         rotation: vec3.create(),
         position: vec3.create(),
         scale: vec3.fromValues(1, 1, 1),
-        color: vec3.fromValues(1, 1, 1)
+        color: vec3.fromValues(1, 1, 1),
+        unlit: false,
+        gradient: false,
+        gradientTop: undefined,
+        gradientBottom: undefined
     };
 }
 
@@ -589,8 +638,20 @@ export function renderAllMeshes(): void {
 
     for(const [id, mesh] of meshCache.entries()) {
         if(hudIds.has(id)) continue;
+        
+        setUnlit(mesh.unlit);
+
+        if(mesh.gradient) {
+            setGradient(true, mesh.gradientTop, mesh.gradientBottom);
+        } else {
+            setGradient(false);
+        }
+
         renderMesh(mesh);
     }
+
+    setUnlit(false);
+    setGradient(false);
 }
 
 export function renderHud(id: string, textureName: string, inverted: boolean = false, pixelSize: [number, number]): void {

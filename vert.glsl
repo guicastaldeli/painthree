@@ -23,7 +23,7 @@ void main() {
         vNormal = mat3(transpose(inverse(uModelMatrix))) * aNormal;
 
         vec4 worldPos = uModelMatrix * vec4(aPos, 1.0);
-
+        vFragPos = worldPos.xyz;
         gl_Position = uProjectionMatrix* uViewMatrix * worldPos;
     }
 }

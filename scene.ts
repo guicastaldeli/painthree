@@ -49,14 +49,19 @@ const SKYBOX_COLOR = 1.0;
 function setSkybox(): void {
     const id = 'skybox';
 
-    data.addMesh(id, data.MeshType.CUBE, 
+    data.addMesh(id, data.MeshType.SPHERE, 
         vec3.fromValues(SKYBOX_POS_X, SKYBOX_POS_Y, SKYBOX_POS_Z), 
         vec3.fromValues(SKYBOX_COLOR, SKYBOX_COLOR, SKYBOX_COLOR));
     data.setMeshScale(id, 
         SKYBOX_SCALE_X, 
         SKYBOX_SCALE_Y, 
         SKYBOX_SCALE_Z
-    )
+    );
+    data.setMeshGradient(id, true, 
+        vec3.fromValues(1.0, 1.0, 1.0),
+        vec3.fromValues(0.5, 0.5, 0.5)
+    );
+    data.setMeshUnlit(id, true);
 }
 
 /**

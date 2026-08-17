@@ -23,6 +23,12 @@ uniform vec3 uLightDirection;
 uniform vec3 uLightColor;
 uniform float uLightIntensity;
 
+uniform bool uUnlit;
+
+uniform bool uGradient;
+uniform vec3 uGradientTop;
+uniform vec3 uGradientBottom;
+
 vec4 invert(vec4 texColor, bool isInv) {
     if(!isInv) return texColor;
 
@@ -51,9 +57,10 @@ void main() {
         float diff = max(dot(normal, lightDir), 0.0);
         vec3 diffuse = uLightColor * uLightIntensity * diff;
 
-        vec3 lighting = ambient + diffuse;
+        vec3 lighting = uUnlit ? vec3(1.0) : (ambient + diffuse);
         
-        vec3 finalColor = uColor * lighting;
+        vec3 baseColor = uGradient ? mix(uGradientBottom, uGradientTop, clamp(vFragPos.y * 0.1 + 0.5, 0.0, 1.0)) : uColor;
+        vec3 finalColor = baseColor * lighting;
         outColor = vec4(finalColor, 1.0);
     }
 }
